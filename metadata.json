@@ -1,0 +1,6 @@
+{
+  "name": "IOIS 7 Master Plans Portal",
+  "description": "IOIS (Indian Online Income Supporting System) 7 Master Plans - डिजिटल स्वावलंबन, 17+ ऑनलाइन सेवाएं, इंसेंटिव कैलकुलेटर व AI सहायक।",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
