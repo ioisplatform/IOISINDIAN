@@ -244,7 +244,7 @@ export const ioisMasterPlans: PlanDetail[] = [
   {
     id: 'plan-05',
     planNumber: 5,
-    name: 'Student Elite Access',
+    name: 'Student & Exam Access',
     subtitle: 'Competitive Exam Preparation',
     tagline: 'सरकारी नौकरी परीक्षाओं की अचूक तैयारी',
     category: 'career',
@@ -305,7 +305,7 @@ export const ioisMasterPlans: PlanDetail[] = [
   {
     id: 'plan-06',
     planNumber: 6,
-    name: 'Agency Reseller Hub',
+    name: 'Agency Reseller Access',
     subtitle: 'Digital Business & Automation',
     tagline: 'डिजिटल एजेंसी, ऑटोमेशन और रीसेलिंग बिजनेस',
     category: 'master',

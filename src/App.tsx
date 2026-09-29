@@ -6,6 +6,7 @@ import { KidsLearningCorner } from './components/KidsLearningCorner';
 import { KidsAiTeacherZone } from './components/KidsAiTeacherZone';
 import { MembershipPlansSection } from './components/MembershipPlansSection';
 import { StudentLeaderboardWidget } from './components/StudentLeaderboardWidget';
+import { StudentMainDashboardView } from './components/StudentMainDashboardView';
 import { PlanComparisonMatrix } from './components/PlanComparisonMatrix';
 import { AiAssistantModal } from './components/AiAssistantModal';
 import { RegistrationModal } from './components/RegistrationModal';
@@ -39,6 +40,7 @@ export default function App() {
   const [dashboardModalOpen, setDashboardModalOpen] = useState(false);
   const [idCardModalOpen, setIdCardModalOpen] = useState(false);
   const [kidsAiZoneOpen, setKidsAiZoneOpen] = useState(false);
+  const [isDashboardView, setIsDashboardView] = useState<boolean>(() => !!getCurrentSessionUser());
 
   // Auto-sync current user session
   useEffect(() => {
@@ -60,19 +62,21 @@ export default function App() {
 
   const handleSuccessRegistration = (newProfile: MemberProfile) => {
     setCurrentUser(newProfile);
+    setIsDashboardView(true);
     setRegistrationModalOpen(false);
     setIdCardModalOpen(true);
   };
 
   const handleSuccessLogin = (member: MemberProfile) => {
     setCurrentUser(member);
+    setIsDashboardView(true);
     setLoginModalOpen(false);
-    setDashboardModalOpen(true);
   };
 
   const handleLogout = () => {
     setCurrentSessionUser(null);
     setCurrentUser(null);
+    setIsDashboardView(false);
     setDashboardModalOpen(false);
   };
 
@@ -112,20 +116,32 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 selection:bg-orange-500 selection:text-white font-sans antialiased">
       
-      {/* 1. Global Student Navbar */}
-      <Navbar
-        currentUser={currentUser}
-        onOpenAiModal={handleOpenAi}
-        onOpenRegistrationModal={handleOpenRegistration}
-        onOpenLoginModal={() => setLoginModalOpen(true)}
-        onOpenDashboardModal={() => setDashboardModalOpen(true)}
-        onOpenIdCardModal={handleOpenIdCardModal}
-        onOpenStudyPage={handleOpenStudyPage}
-        onScrollToSection={handleScrollToSection}
-        onLogout={handleLogout}
-      />
+      {/* 1. Global Student Navbar (shown on landing page) */}
+      {!isDashboardView && (
+        <Navbar
+          currentUser={currentUser}
+          onOpenAiModal={handleOpenAi}
+          onOpenRegistrationModal={handleOpenRegistration}
+          onOpenLoginModal={() => {
+            if (currentUser) {
+              setIsDashboardView(true);
+            } else {
+              setLoginModalOpen(true);
+            }
+          }}
+          onOpenDashboardModal={() => setIsDashboardView(true)}
+          onOpenIdCardModal={handleOpenIdCardModal}
+          onOpenStudyPage={handleOpenStudyPage}
+          onScrollToSection={handleScrollToSection}
+          onLogout={handleLogout}
+        />
+      )}
 
-      {/* CONDITIONAL: DEDICATED STUDENT PLAN STUDY & WORK PAGE */}
+      {/* CONDITIONAL VIEWS:
+          1. Dedicated Full-screen Plan Study Hub (activePlanObj)
+          2. Logged-in Student Main Dashboard View (isDashboardView && currentUser)
+          3. Main Landing Homepage (5 Responsive Sections)
+      */}
       {activePlanObj ? (
         <StudentPlanHubPage
           plan={activePlanObj}
@@ -138,6 +154,14 @@ export default function App() {
           onOpenRegistration={(pId) => handleOpenRegistration(pId)}
           onOpenLogin={() => setLoginModalOpen(true)}
         />
+      ) : isDashboardView && currentUser ? (
+        <StudentMainDashboardView
+          currentUser={currentUser}
+          onLogout={handleLogout}
+          onOpenStudyPage={handleOpenStudyPage}
+          onOpenIdCard={handleOpenIdCardModal}
+          onViewHomepage={() => setIsDashboardView(false)}
+        />
       ) : (
         /* MAIN LANDING: 5 PERFECT HOME SECTIONS */
         <main className="flex-1">
@@ -145,7 +169,13 @@ export default function App() {
           <HeroSection
             onOpenStudyPage={handleOpenStudyPage}
             onOpenAiAdvisor={() => handleOpenAi('कक्षा और विषय के अनुसार मुझे अध्ययन की रूपरेखा समझाएं')}
-            onOpenLoginModal={() => setLoginModalOpen(true)}
+            onOpenLoginModal={() => {
+              if (currentUser) {
+                setIsDashboardView(true);
+              } else {
+                setLoginModalOpen(true);
+              }
+            }}
             onScrollToSection={handleScrollToSection}
           />
 
@@ -184,14 +214,16 @@ export default function App() {
         </main>
       )}
 
-      {/* SECTION 5: FOOTER AND SUPPORT */}
-      <Footer
-        onScrollToTop={() => handleScrollToSection('top')}
-        onOpenAiModal={() => handleOpenAi()}
-        onOpenIdCardModal={handleOpenIdCardModal}
-        onOpenRegistration={() => handleOpenRegistration('plan-01')}
-        onOpenStudyPage={handleOpenStudyPage}
-      />
+      {/* SECTION 5: FOOTER AND SUPPORT (Landing View only) */}
+      {!activePlanObj && !isDashboardView && (
+        <Footer
+          onScrollToTop={() => handleScrollToSection('top')}
+          onOpenAiModal={() => handleOpenAi()}
+          onOpenIdCardModal={handleOpenIdCardModal}
+          onOpenRegistration={() => handleOpenRegistration('plan-01')}
+          onOpenStudyPage={handleOpenStudyPage}
+        />
+      )}
 
       {/* MODALS */}
       
