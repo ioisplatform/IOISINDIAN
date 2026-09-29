@@ -12,7 +12,9 @@ import {
   Pencil,
   FileCheck2,
   CreditCard,
-  GraduationCap
+  GraduationCap,
+  Store,
+  ExternalLink
 } from 'lucide-react';
 
 interface FooterProps {
@@ -40,7 +42,7 @@ export const Footer: React.FC<FooterProps> = ({
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           
-          {/* Brand & Student Mission */}
+          {/* Brand & Mission & DFGS Digital Point Reference */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 rounded-2xl bg-orange-600 flex items-center justify-center font-black text-white text-base shadow">
@@ -51,18 +53,29 @@ export const Footer: React.FC<FooterProps> = ({
                   IOIS STUDENT PORTAL
                 </span>
                 <p className="text-[11px] text-orange-400 font-medium leading-none">
-                  Indian Online Institution System • डिजिटल शिक्षा मंच
+                  Indian Online Income Supporting System • डिजिटल शिक्षा मंच
                 </p>
               </div>
             </div>
 
             <p className="text-slate-400 leading-relaxed text-xs max-w-sm">
-              भारत के विद्यार्थियों के लिए समर्पित संपूर्ण डिजिटल शिक्षण मंच। कक्षा 1 से 12 तक के सचित्र अध्ययन नोट्स, इंटरएक्टिव वीडियो कक्षाएं, डिजिटल अक्षर ट्रेसिंग पैड, दैनिक गृहकार्य और छात्र पहचान प्रणाली।
+              भारत के सभी विद्यार्थियों के लिए समर्पित ऑल-डिवाइस फ्रेंडली शिक्षा मंच। नर्सरी से 5वीं के लिए सचित्र वर्णमाला व ट्रेसिंग पैड, तथा कक्षा 6 से 12 तक के NCERT नोट्स, वीडियो लेक्चर्स व दैनिक गृहकार्य।
             </p>
+
+            {/* DFGS Digital Point Authorized Store Box */}
+            <div className="p-3.5 rounded-2xl bg-slate-900 border border-slate-800 space-y-1.5 max-w-sm">
+              <div className="flex items-center gap-2 text-amber-400 font-bold text-xs">
+                <Store className="w-4 h-4 text-amber-400 shrink-0" />
+                <span>अधिकृत स्टोर: DFGS Digital Point</span>
+              </div>
+              <p className="text-[11px] text-slate-400 leading-snug">
+                <strong>DFGS Digital Point</strong> — डिजिटल रजिस्ट्रेशन, छात्र सहायता व अध्ययन सामग्री वेरिफिकेशन का विश्वसनीय केंद्र।
+              </p>
+            </div>
 
             <div className="flex items-center space-x-2 pt-1 text-emerald-400 text-xs font-semibold">
               <ShieldCheck className="w-4 h-4" />
-              <span>100% छात्र-अनुकूल • सत्यापित अध्ययन सामग्री • सुरक्षित वातावरण</span>
+              <span>100% सुरक्षित • मोबाइल फ्रेंडली • छात्र सत्यापित</span>
             </div>
           </div>
 
@@ -158,18 +171,31 @@ export const Footer: React.FC<FooterProps> = ({
           {/* Contact & Student Helpline */}
           <div className="space-y-3">
             <span className="font-extrabold text-white text-xs uppercase tracking-wider block">
-              छात्र सहायता केंद्र
+              हेल्पलाइन व संपर्क (Support)
             </span>
-            <div className="space-y-2 text-xs text-slate-400">
-              <div className="flex items-center space-x-2">
+            <div className="space-y-2.5 text-xs text-slate-300">
+              <a 
+                href="tel:8298324215"
+                className="flex items-center space-x-2 text-slate-300 hover:text-emerald-400 transition-colors"
+              >
+                <PhoneCall className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span className="font-bold text-white tracking-wide">8298324215 (कॉल / WhatsApp)</span>
+              </a>
+
+              <a 
+                href="mailto:ioisplatform@gmail.com"
+                className="flex items-center space-x-2 text-slate-300 hover:text-orange-400 transition-colors"
+              >
                 <Mail className="w-4 h-4 text-orange-400 shrink-0" />
                 <span>ioisplatform@gmail.com</span>
+              </a>
+
+              <div className="flex items-start space-x-2 text-slate-400">
+                <Store className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <span>DFGS Digital Point • अधिकृत स्टोर</span>
               </div>
-              <div className="flex items-center space-x-2">
-                <PhoneCall className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>+91 8877490845 (हेल्पलाइन)</span>
-              </div>
-              <div className="flex items-center space-x-2">
+
+              <div className="flex items-center space-x-2 text-slate-400">
                 <MapPin className="w-4 h-4 text-blue-400 shrink-0" />
                 <span>डिजिटल शिक्षा प्रकोष्ठ, भारत</span>
               </div>
@@ -178,44 +204,29 @@ export const Footer: React.FC<FooterProps> = ({
             <div className="pt-2">
               <button
                 onClick={onOpenAiModal}
-                className="w-full py-2.5 px-3 rounded-xl bg-purple-900/60 hover:bg-purple-900 border border-purple-700 text-purple-200 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
+                className="w-full py-2 px-3 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 border border-purple-500/40 text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
               >
-                <Bot className="w-4 h-4 text-purple-400" />
-                <span>24x7 AI छात्र सलाहकार</span>
+                <Bot className="w-3.5 h-3.5 text-purple-400" />
+                <span>24x7 AI स्टूडेंट सलाहकार</span>
               </button>
             </div>
           </div>
 
         </div>
 
-        {/* Educational Disclaimer */}
-        <div className="mt-10 pt-6 border-t border-slate-800/80 text-[11px] text-slate-500 leading-relaxed space-y-2">
-          <p>
-            <strong>अध्ययन निर्देश (Educational Note):</strong> IOIS पोर्टल भारत के छात्रों के लिए NCERT आधारित पाठ्यक्रम, डिजिटल अक्षर ट्रेसिंग, ऑडियो-विजुअल कक्षाएं और गृहकार्य अभ्यास प्रदान करता है। सभी सामग्री विद्यार्थियों के शैक्षणिक विकास और कौशल संवर्धन के उद्देश्य से निर्मित की गई है।
-          </p>
-          <div className="flex flex-wrap gap-4 text-slate-400 text-xs pt-1">
-            <span className="hover:text-white cursor-pointer">गोपनीयता नीति (Privacy Policy)</span>
-            <span>•</span>
-            <span className="hover:text-white cursor-pointer">अध्ययन शर्तें (Terms of Use)</span>
-            <span>•</span>
-            <span className="hover:text-white cursor-pointer">छात्र आचार संहिता (Student Code)</span>
-            <span>•</span>
-            <span className="hover:text-white cursor-pointer">हेल्पलाइन व संपर्क (Support Desk)</span>
+        {/* Bottom Strip */}
+        <div className="mt-12 pt-6 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-400 gap-4">
+          <p>© {new Date().getFullYear()} IOIS Platform • DFGS Digital Point. समस्त अधिकार सुरक्षित।</p>
+          
+          <div className="flex items-center space-x-4">
+            <button 
+              onClick={onScrollToTop} 
+              className="hover:text-white transition-colors flex items-center space-x-1"
+            >
+              <span>ऊपर जाएं</span>
+              <ArrowUp className="w-3.5 h-3.5" />
+            </button>
           </div>
-        </div>
-
-        {/* Bottom Credits & Back to Top */}
-        <div className="mt-6 pt-4 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between text-slate-500 text-xs gap-3">
-          <span>
-            © 2026 IOIS Student Learning Platform. All Rights Reserved. • Made with love for Indian Students.
-          </span>
-          <button
-            onClick={onScrollToTop}
-            className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white flex items-center gap-1 transition-colors shrink-0"
-          >
-            <span>शीर्ष पर जाएं</span>
-            <ArrowUp className="w-3.5 h-3.5" />
-          </button>
         </div>
 
       </div>
