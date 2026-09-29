@@ -42,7 +42,7 @@ export const Footer: React.FC<FooterProps> = ({
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           
-          {/* Brand & Mission & DFGS Digital Point Reference */}
+          {/* Brand & Mission & IOIS India Reference */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 rounded-2xl bg-orange-600 flex items-center justify-center font-black text-white text-base shadow">
@@ -62,14 +62,14 @@ export const Footer: React.FC<FooterProps> = ({
               भारत के सभी विद्यार्थियों के लिए समर्पित ऑल-डिवाइस फ्रेंडली शिक्षा मंच। नर्सरी से 5वीं के लिए सचित्र वर्णमाला व ट्रेसिंग पैड, तथा कक्षा 6 से 12 तक के NCERT नोट्स, वीडियो लेक्चर्स व दैनिक गृहकार्य।
             </p>
 
-            {/* DFGS Digital Point Authorized Store Box */}
+            {/* IOIS India Authorized Center Box */}
             <div className="p-3.5 rounded-2xl bg-slate-900 border border-slate-800 space-y-1.5 max-w-sm">
               <div className="flex items-center gap-2 text-amber-400 font-bold text-xs">
                 <Store className="w-4 h-4 text-amber-400 shrink-0" />
-                <span>अधिकृत स्टोर: DFGS Digital Point</span>
+                <span>अधिकृत केंद्र: IOIS India</span>
               </div>
               <p className="text-[11px] text-slate-400 leading-snug">
-                <strong>DFGS Digital Point</strong> — डिजिटल रजिस्ट्रेशन, छात्र सहायता व अध्ययन सामग्री वेरिफिकेशन का विश्वसनीय केंद्र।
+                <strong>IOIS India</strong> — डिजिटल रजिस्ट्रेशन, छात्र सहायता व अध्ययन सामग्री वेरिफिकेशन का आधिकारिक राष्ट्रीय मंच।
               </p>
             </div>
 
@@ -175,11 +175,11 @@ export const Footer: React.FC<FooterProps> = ({
             </span>
             <div className="space-y-2.5 text-xs text-slate-300">
               <a 
-                href="tel:8298324215"
+                href="tel:8877490845"
                 className="flex items-center space-x-2 text-slate-300 hover:text-emerald-400 transition-colors"
               >
                 <PhoneCall className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span className="font-bold text-white tracking-wide">8298324215 (कॉल / WhatsApp)</span>
+                <span className="font-bold text-white tracking-wide">8877490845 (कॉल / WhatsApp)</span>
               </a>
 
               <a 
@@ -192,7 +192,7 @@ export const Footer: React.FC<FooterProps> = ({
 
               <div className="flex items-start space-x-2 text-slate-400">
                 <Store className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                <span>DFGS Digital Point • अधिकृत स्टोर</span>
+                <span>IOIS India • राष्ट्रीय डिजिटल शिक्षा केंद्र</span>
               </div>
 
               <div className="flex items-center space-x-2 text-slate-400">
@@ -216,7 +216,7 @@ export const Footer: React.FC<FooterProps> = ({
 
         {/* Bottom Strip */}
         <div className="mt-12 pt-6 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-400 gap-4">
-          <p>© {new Date().getFullYear()} IOIS Platform • DFGS Digital Point. समस्त अधिकार सुरक्षित।</p>
+          <p>© {new Date().getFullYear()} IOIS Platform • IOIS India. समस्त अधिकार सुरक्षित।</p>
           
           <div className="flex items-center space-x-4">
             <button 

@@ -3,7 +3,9 @@ import { Navbar } from './components/Navbar';
 import { HeroSection } from './components/HeroSection';
 import { ClassSelectionGrid } from './components/ClassSelectionGrid';
 import { KidsLearningCorner } from './components/KidsLearningCorner';
+import { KidsAiTeacherZone } from './components/KidsAiTeacherZone';
 import { MembershipPlansSection } from './components/MembershipPlansSection';
+import { StudentLeaderboardWidget } from './components/StudentLeaderboardWidget';
 import { PlanComparisonMatrix } from './components/PlanComparisonMatrix';
 import { AiAssistantModal } from './components/AiAssistantModal';
 import { RegistrationModal } from './components/RegistrationModal';
@@ -36,6 +38,7 @@ export default function App() {
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [dashboardModalOpen, setDashboardModalOpen] = useState(false);
   const [idCardModalOpen, setIdCardModalOpen] = useState(false);
+  const [kidsAiZoneOpen, setKidsAiZoneOpen] = useState(false);
 
   // Auto-sync current user session
   useEffect(() => {
@@ -157,6 +160,7 @@ export default function App() {
           <KidsLearningCorner
             onOpenStudyPage={handleOpenStudyPage}
             onOpenAiTeacher={(prompt) => handleOpenAi(prompt)}
+            onOpenKidsAiZone={() => setKidsAiZoneOpen(true)}
           />
 
           {/* SECTION 4: MEMBERSHIP PLANS & PACKAGES SECTION */}
@@ -164,6 +168,11 @@ export default function App() {
             onJoinPlan={(planId) => handleOpenRegistration(planId)}
             onOpenStudyPage={handleOpenStudyPage}
             onOpenAiAdvisor={() => handleOpenAi('मुझे मेरे बजट और कक्षा के अनुसार सही प्लान बताएं')}
+          />
+
+          {/* INSPIRING STUDENT LEADERBOARD & 1-CLICK VIRAL SHARE */}
+          <StudentLeaderboardWidget
+            onJoinPlan={(planId) => handleOpenRegistration(planId)}
           />
 
           {/* BONUS CURRICULUM COMPARISON TABLE */}
@@ -186,6 +195,13 @@ export default function App() {
 
       {/* MODALS */}
       
+      {/* 0. Dedicated Kids AI Teacher Zone (Story Generator, Voice Mic, Quiz & Star Certificate) */}
+      <KidsAiTeacherZone
+        isOpen={kidsAiZoneOpen}
+        onClose={() => setKidsAiZoneOpen(false)}
+        onOpenStudyPage={handleOpenStudyPage}
+      />
+
       {/* 1. Student AI Advisor Modal */}
       <AiAssistantModal
         isOpen={aiModalOpen}

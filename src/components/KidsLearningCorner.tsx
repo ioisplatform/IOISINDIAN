@@ -16,11 +16,13 @@ import {
 interface KidsLearningCornerProps {
   onOpenStudyPage: (planId: string) => void;
   onOpenAiTeacher: (initialPrompt?: string) => void;
+  onOpenKidsAiZone: () => void;
 }
 
 export const KidsLearningCorner: React.FC<KidsLearningCornerProps> = ({
   onOpenStudyPage,
-  onOpenAiTeacher
+  onOpenAiTeacher,
+  onOpenKidsAiZone
 }) => {
   const [playingAudioKey, setPlayingAudioKey] = useState<string | null>(null);
 
@@ -234,11 +236,11 @@ export const KidsLearningCorner: React.FC<KidsLearningCornerProps> = ({
             {/* Quick Interactive Prompt Button */}
             <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto shrink-0">
               <button
-                onClick={() => onOpenAiTeacher('कक्षा 1 से 5 के लिए आसान हिंदी व वर्णमाला कैसे याद करें?')}
+                onClick={onOpenKidsAiZone}
                 className="w-full sm:w-auto px-6 py-3.5 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-slate-950 font-black text-sm rounded-2xl shadow-xl flex items-center justify-center gap-2 transition-transform hover:scale-105 active:scale-95"
               >
                 <Bot className="w-4 h-4 text-slate-950" />
-                <span>एआई टीचर से बात करें (Ask Now)</span>
+                <span>एआई टीचर से बात करें (जादुई कहानी व क्विज)</span>
                 <ArrowRight className="w-4 h-4 text-slate-950" />
               </button>
 
