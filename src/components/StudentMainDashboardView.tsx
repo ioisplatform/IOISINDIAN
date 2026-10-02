@@ -1,200 +1,275 @@
-import React, { useState } from 'react';
-import { MemberProfile, PlanDetail } from '../types';
+import React, { useState, useEffect } from 'react';
+import { MemberProfile, ActiveSession } from '../types';
 import { ioisMasterPlans } from '../data/ioisPlansData';
 import { 
-  Sparkles, 
+  canUserAccessPlanKit, 
+  getUserConnectedDevices, 
+  logoutDeviceSession, 
+  logoutAllDevices,
+  registerOrUpdateDeviceSession,
+  updateMemberProfile
+} from '../services/userService';
+import { 
   BookOpen, 
-  Bot, 
-  Volume2, 
-  Mic, 
-  FileText, 
-  Download, 
-  Share2, 
-  Award, 
-  CheckCircle2, 
-  Star, 
-  Copy, 
-  ExternalLink, 
-  LogOut, 
+  GraduationCap, 
   CreditCard, 
-  User, 
-  Layers, 
-  ArrowRight, 
-  Compass, 
-  Briefcase, 
-  Calendar, 
-  Shield, 
-  Heart, 
-  Cloud, 
-  Crown, 
   Eye, 
-  Lock,
-  GraduationCap,
-  Store,
-  ChevronDown
+  LogOut, 
+  CheckCircle2, 
+  AlertCircle, 
+  Clock, 
+  ShieldCheck, 
+  Laptop, 
+  Smartphone, 
+  Tablet, 
+  Power, 
+  RefreshCw, 
+  Check, 
+  Edit3, 
+  Save, 
+  MapPin, 
+  Phone, 
+  Mail, 
+  Layers, 
+  Lock, 
+  Unlock, 
+  Tv, 
+  Pencil, 
+  FileCheck2, 
+  HelpCircle, 
+  Calendar,
+  AlertTriangle,
+  UserCheck,
+  ShieldAlert
 } from 'lucide-react';
 
 interface StudentMainDashboardViewProps {
   currentUser: MemberProfile;
   onLogout: () => void;
-  onOpenStudyPage: (planId: string) => void;
+  onOpenStudyModal: (planId: string) => void;
   onOpenIdCard: () => void;
   onViewHomepage: () => void;
+  onProfileUpdated?: (updated: MemberProfile) => void;
 }
 
 export const StudentMainDashboardView: React.FC<StudentMainDashboardViewProps> = ({
   currentUser,
   onLogout,
-  onOpenStudyPage,
+  onOpenStudyModal,
   onOpenIdCard,
-  onViewHomepage
+  onViewHomepage,
+  onProfileUpdated
 }) => {
-  // Selected Plan Tab - default to user's registered plan or plan-01
-  const [activePlanId, setActivePlanId] = useState<string>(currentUser.planId || 'plan-01');
+  const [activeTab, setActiveTab] = useState<'study' | 'account' | 'devices' | 'profile'>('study');
+  const [selectedPlanForWorkspace, setSelectedPlanForWorkspace] = useState<string>(currentUser.planId || 'plan-01');
 
-  // Plan 01 State: AI Teacher Voice & Story
-  const [aiVoiceQuery, setAiVoiceQuery] = useState('');
-  const [aiVoiceResponse, setAiVoiceResponse] = useState('नमस्ते प्यारे बच्चे! आप माइक दबाकर मुझसे कुछ भी पूछ सकते हैं, जैसे: "क से क्या होता है?" या "A for Apple की कविता सुनाएं!"');
-  const [isAiListening, setIsAiListening] = useState(false);
-  const [isAiSpeaking, setIsAiSpeaking] = useState(false);
-  const [selectedBalVikasSlide, setSelectedBalVikasSlide] = useState(0);
+  // Edit Profile State
+  const [editName, setEditName] = useState(currentUser.name || '');
+  const [editPhone, setEditPhone] = useState(currentUser.phone || '');
+  const [editEmail, setEditEmail] = useState(currentUser.email || '');
+  const [editCity, setEditCity] = useState(currentUser.city || '');
+  const [editState, setEditState] = useState(currentUser.state || '');
+  const [editDesignation, setEditDesignation] = useState(currentUser.designation || 'Class 1-12');
+  const [editAddress, setEditAddress] = useState(currentUser.address || '');
+  const [profileSuccessMsg, setProfileSuccessMsg] = useState('');
+  const [profileLoading, setProfileLoading] = useState(false);
 
-  // Plan 02 State: Resume & AI Tools
-  const [copiedPromptKey, setCopiedPromptKey] = useState<string | null>(null);
+  // Connected Devices State
+  const [deviceList, setDeviceList] = useState<ActiveSession[]>(() => getUserConnectedDevices(currentUser));
+  const [isRefreshingDevices, setIsRefreshingDevices] = useState(false);
+  const [isLoggingOutAll, setIsLoggingOutAll] = useState(false);
+  const [showConfirmLogoutAll, setShowConfirmLogoutAll] = useState(false);
+  const [deviceActionMsg, setDeviceActionMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [terminatingSessionId, setTerminatingSessionId] = useState<string | null>(null);
 
-  // Plan 03 State: Class Dropdown & Stream
-  const [selectedNcertClass, setSelectedNcertClass] = useState('10');
-  const [selectedNcertSubject, setSelectedNcertSubject] = useState('विज्ञान (Science)');
+  // Sync / ensure current device is registered on mount
+  useEffect(() => {
+    registerOrUpdateDeviceSession(currentUser).then((freshUser) => {
+      setDeviceList(getUserConnectedDevices(freshUser));
+    });
+  }, [currentUser]);
 
-  // Plan 06 State: Referral Link Share
-  const [copiedReferral, setCopiedReferral] = useState(false);
+  // Handle Save Profile
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProfileLoading(true);
+    setProfileSuccessMsg('');
 
-  // Voice Functionality
-  const speakText = (text: string) => {
-    if (!('speechSynthesis' in window)) {
-      alert('स्पीच वाचन आपके ब्राउज़र में उपलब्ध नहीं है।');
-      return;
+    const res = updateMemberProfile({
+      memberId: currentUser.memberId,
+      name: editName.trim(),
+      phone: editPhone.trim(),
+      email: editEmail.trim(),
+      city: editCity.trim(),
+      state: editState.trim(),
+      designation: editDesignation.trim()
+    });
+
+    setProfileLoading(false);
+    if (res.success && res.member) {
+      if (onProfileUpdated) {
+        onProfileUpdated(res.member);
+      }
+      setProfileSuccessMsg('छात्र प्रोफाइल विवरण सफलतापूर्वक अपडेट हो गया है!');
+      setTimeout(() => setProfileSuccessMsg(''), 4000);
     }
-    window.speechSynthesis.cancel();
-    if (isAiSpeaking) {
-      setIsAiSpeaking(false);
-      return;
+  };
+
+  // Device Session Handlers
+  const handleRefreshDevices = async () => {
+    setIsRefreshingDevices(true);
+    try {
+      const fresh = await registerOrUpdateDeviceSession(currentUser);
+      setDeviceList(getUserConnectedDevices(fresh));
+      setDeviceActionMsg({
+        type: 'success',
+        text: 'कनेक्टेड डिवाइसेज की सूची रीयल-टाइम डेटा से अपडेट हो गई है।'
+      });
+      setTimeout(() => setDeviceActionMsg(null), 3000);
+    } catch {
+      setDeviceActionMsg({
+        type: 'error',
+        text: 'डिवाइस सूची रीफ्रेश करने में समस्या आई।'
+      });
+    } finally {
+      setIsRefreshingDevices(false);
     }
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'hi-IN';
-    utterance.rate = 0.9;
-    utterance.onstart = () => setIsAiSpeaking(true);
-    utterance.onend = () => setIsAiSpeaking(false);
-    utterance.onerror = () => setIsAiSpeaking(false);
-    window.speechSynthesis.speak(utterance);
   };
 
-  const startVoiceInput = () => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      alert('ब्राउज़र स्पीच रिकग्निशन उपलब्ध नहीं है। कृपया गूगल क्रोम का उपयोग करें या प्रश्नों पर क्लिक करें।');
-      return;
+  const handleLogoutDevice = async (sessionId: string) => {
+    setTerminatingSessionId(sessionId);
+    setDeviceActionMsg(null);
+    try {
+      const res = await logoutDeviceSession(currentUser.memberId, sessionId);
+      if (res.isCurrentDevice) {
+        onLogout();
+      } else {
+        if (res.updatedUser) {
+          setDeviceList(getUserConnectedDevices(res.updatedUser));
+          if (onProfileUpdated) onProfileUpdated(res.updatedUser);
+        } else {
+          setDeviceList(prev => prev.filter(d => d.id !== sessionId));
+        }
+        setDeviceActionMsg({
+          type: 'success',
+          text: 'डिवाइस सत्र सफलतापूर्वक समाप्त कर दिया गया।'
+        });
+        setTimeout(() => setDeviceActionMsg(null), 3000);
+      }
+    } catch {
+      setDeviceActionMsg({
+        type: 'error',
+        text: 'डिवाइस सत्र हटाने में समस्या आई।'
+      });
+    } finally {
+      setTerminatingSessionId(null);
     }
-    const rec = new SpeechRecognition();
-    rec.lang = 'hi-IN';
-    rec.onstart = () => setIsAiListening(true);
-    rec.onend = () => setIsAiListening(false);
-    rec.onerror = () => setIsAiListening(false);
-    rec.onresult = (e: any) => {
-      const q = e.results[0][0].transcript;
-      setAiVoiceQuery(q);
-      handleVoiceQuery(q);
-    };
-    rec.start();
   };
 
-  const handleVoiceQuery = (query: string) => {
-    const q = query.toLowerCase();
-    let ans = '';
-    if (q.includes('a for') || q.includes('ए फॉर')) {
-      ans = 'A for Apple! Apple का अर्थ सेब होता है, जो लाल रंग का और बहुत मीठा होता है!';
-    } else if (q.includes('क से') || q.includes('कबूतर')) {
-      ans = 'क से कबूतर, ख से खरगोश, ग से गमला और घ से घड़ी! खूब मन लगाकर पढ़ाई करें!';
-    } else if (q.includes('पहाड़ा') || q.includes('table')) {
-      ans = 'दो एकम दो, दो दूनी चार, दो तिया छह, दो चौके आठ, दो पंजे दस!';
-    } else {
-      ans = `वाह! आपने पूछा: "${query}"। आपका AI टीचर कहता है कि प्रतिदिन 30 मिनट अभ्यास से आप हमेशा कक्षा में प्रथम आएंगे!`;
+  const handleLogoutAllDevices = async () => {
+    setIsLoggingOutAll(true);
+    setDeviceActionMsg(null);
+    try {
+      await logoutAllDevices(currentUser.memberId);
+      setShowConfirmLogoutAll(false);
+      onLogout();
+    } catch {
+      setIsLoggingOutAll(false);
+      setDeviceActionMsg({
+        type: 'error',
+        text: 'सभी डिवाइसेज से लॉगआउट करने में समस्या आई।'
+      });
     }
-    setAiVoiceResponse(ans);
-    speakText(ans);
   };
 
-  const handleCopyPrompt = (prompt: string, key: string) => {
-    navigator.clipboard.writeText(prompt);
-    setCopiedPromptKey(key);
-    setTimeout(() => setCopiedPromptKey(null), 2000);
+  const getDeviceIcon = (deviceType: 'desktop' | 'mobile' | 'tablet') => {
+    switch (deviceType) {
+      case 'mobile':
+        return <Smartphone className="w-5 h-5 text-blue-600" />;
+      case 'tablet':
+        return <Tablet className="w-5 h-5 text-indigo-600" />;
+      case 'desktop':
+      default:
+        return <Laptop className="w-5 h-5 text-slate-700" />;
+    }
   };
 
-  const referralUrl = `https://ioisplatform.github.io/student/?ref=${currentUser.memberId}`;
-  const referralShareText = `🇮🇳 नमस्ते! मैं IOIS डिजिटल शिक्षा पोर्टल से जुड़ा हूँ। यहाँ कक्षा 1 से 12 तक के सचित्र NCERT नोट्स, Google Flow वीडियो कक्षाएं, डिजिटल ट्रेसिंग पैड और दैनिक गृहकार्य जांच उपलब्ध है।
-मेरा रेफरल लिंक: ${referralUrl}
-हेल्पलाइन: 8877490845`;
-
-  const handleCopyReferral = () => {
-    navigator.clipboard.writeText(referralShareText);
-    setCopiedReferral(true);
-    setTimeout(() => setCopiedReferral(false), 2000);
-  };
-
-  const balVikasSlides = [
-    { title: 'हिंदी वर्णमाला (अ से अः)', emoji: '🍎', sample: 'अ - अनार, आ - आम, इ - इमली, ई - ईख, उ - उल्लू' },
-    { title: 'अंग्रेजी अल्फाबेट्स (A to Z)', emoji: '🔤', sample: 'A for Apple, B for Ball, C for Cat, D for Dog' },
-    { title: 'संख्या व पहाड़ा (1 से 20)', emoji: '🔢', sample: '1, 2, 3, 4, 5, 6, 7, 8, 9, 10 | 2x1=2, 2x2=4...' },
-    { title: 'रंग व फल पहचान', emoji: '🎨', sample: 'लाल (Red), पीला (Yellow), हरा (Green), नीला (Blue)' }
-  ];
+  const currentPlan = ioisMasterPlans.find(p => p.id === currentUser.planId) || ioisMasterPlans[0];
+  const selectedWorkspacePlan = ioisMasterPlans.find(p => p.id === selectedPlanForWorkspace) || currentPlan;
+  const isSelectedPlanUnlocked = canUserAccessPlanKit(currentUser, selectedPlanForWorkspace).hasAccess;
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col font-sans selection:bg-amber-400 selection:text-slate-950">
       
-      {/* TOP DASHBOARD NAVIGATION BAR */}
-      <header className="bg-slate-900 text-white sticky top-0 z-30 shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+      {/* 🇮🇳 Tricolor Top Band */}
+      <div className="h-1.5 w-full bg-gradient-to-r from-orange-500 via-white via-blue-800 to-emerald-600" />
+
+      {/* 👤 1. Official Header & Verification Bar */}
+      <header className="bg-white border-b-2 border-slate-200 sticky top-0 z-30 shadow-xs">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
           
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-orange-600 flex items-center justify-center font-black text-white shadow">
-              <GraduationCap className="w-6 h-6" />
+            <div className="w-11 h-11 rounded-2xl bg-[#1e3a8a] text-white flex items-center justify-center font-black shadow border border-[#d4af37] text-lg">
+              {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'S'}
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="font-black text-base tracking-tight">IOIS छात्र डैशबोर्ड</span>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-bold border border-emerald-400/30">
-                  सत्यापित छात्र
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-black text-base sm:text-lg text-[#0f172a] tracking-tight">
+                  {currentUser.name || 'Student'}
                 </span>
+                
+                {/* Real Payment / Account Verification Badge */}
+                {currentUser.status === 'Active' ? (
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black border border-emerald-300 flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                    <span>सत्यापित छात्र (Active Student)</span>
+                  </span>
+                ) : currentUser.status === 'Pending' ? (
+                  <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-black border border-amber-300 flex items-center gap-1">
+                    <Clock className="w-3 h-3 text-amber-700" />
+                    <span>सत्यापन प्रक्रियाधीन (Pending)</span>
+                  </span>
+                ) : (
+                  <span className="px-2.5 py-0.5 rounded-full bg-red-100 text-red-800 text-[10px] font-black border border-red-300 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3 text-red-600" />
+                    <span>सत्यापन अस्वीकृत</span>
+                  </span>
+                )}
               </div>
-              <p className="text-[11px] text-slate-400">
-                स्वागत है, <strong className="text-orange-400">{currentUser.name}</strong> • ID: <strong className="text-white font-mono">{currentUser.memberId}</strong>
-              </p>
+
+              <div className="flex items-center gap-2 pt-0.5 text-[11px] text-slate-600 flex-wrap">
+                <span>रोल नंबर: <strong className="text-[#1e3a8a] font-mono bg-blue-100/80 px-2 py-0.5 rounded border border-blue-300">{currentUser.rollNumber || currentUser.memberId}</strong></span>
+                <span>•</span>
+                <span>कक्षा: <strong className="text-slate-800">{currentUser.designation || 'Class 1-12'}</strong></span>
+                <span>•</span>
+                <span>प्लान: <strong className="text-emerald-700">{currentUser.planName || currentPlan.name} (शुल्क: ₹{currentUser.amountPaid || 10})</strong></span>
+              </div>
             </div>
           </div>
 
           {/* Quick Header Actions */}
-          <div className="flex items-center space-x-2 sm:space-x-3 text-xs">
+          <div className="flex items-center space-x-2 text-xs">
             <button
               onClick={onOpenIdCard}
-              className="px-3 py-1.5 rounded-xl bg-blue-600/30 hover:bg-blue-600/50 text-blue-300 border border-blue-500/40 font-bold transition-colors flex items-center gap-1.5"
+              className="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-[#1e3a8a] border border-blue-200 font-bold transition-colors flex items-center gap-1.5"
             >
-              <CreditCard className="w-3.5 h-3.5 text-blue-400" />
-              <span className="hidden sm:inline">आईडी कार्ड</span>
+              <CreditCard className="w-3.5 h-3.5 text-[#1e3a8a]" />
+              <span>डिजिटल ID कार्ड</span>
             </button>
 
             <button
               onClick={onViewHomepage}
-              className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold transition-colors flex items-center gap-1.5"
+              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-bold transition-colors flex items-center gap-1.5"
             >
-              <Eye className="w-3.5 h-3.5 text-amber-400" />
-              <span>मुख्य होमपेज</span>
+              <Eye className="w-3.5 h-3.5 text-blue-600" />
+              <span>मुख्य पोर्टल</span>
             </button>
 
             <button
               onClick={onLogout}
-              className="px-3 py-1.5 rounded-xl bg-red-600/20 hover:bg-red-600/40 text-red-300 border border-red-500/40 font-bold transition-colors flex items-center gap-1.5"
+              className="px-3 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-bold transition-colors flex items-center gap-1.5"
             >
-              <LogOut className="w-3.5 h-3.5 text-red-400" />
+              <LogOut className="w-3.5 h-3.5 text-red-600" />
               <span>लॉगआउट</span>
             </button>
           </div>
@@ -202,964 +277,728 @@ export const StudentMainDashboardView: React.FC<StudentMainDashboardViewProps> =
         </div>
       </header>
 
-      {/* DASHBOARD BODY */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        
-        {/* WELCOME BANNER */}
-        <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="space-y-1 text-center md:text-left">
-            <span className="px-3 py-0.5 rounded-full bg-white/20 text-xs font-black uppercase tracking-wider inline-block">
-              🌟 ऑल-इन-वन छात्र शिक्षण कंसोल
+      {/* 2. REAL VERIFICATION STATUS ALERT (If Pending or Active) */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 w-full">
+        {currentUser.status === 'Pending' ? (
+          <div className="p-4 rounded-2xl bg-amber-50 border-2 border-amber-300 text-amber-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+            <div className="flex items-start gap-3">
+              <Clock className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
+                <h4 className="font-black text-xs sm:text-sm text-amber-900">
+                  भुगतान सत्यापन प्रक्रियाधीन (Payment Verification in Progress)
+                </h4>
+                <p className="text-[11px] text-amber-800">
+                  आपके ₹{currentUser.amountPaid || 10} शुल्क भुगतान व UTR: <strong>{currentUser.paymentRef || currentUser.utrNumber || 'UPI Receipt'}</strong> की जांच एडमिन द्वारा की जा रही है। जांच पूरी होने पर आपकी किट पूर्ण रूप से सक्रिय हो जाएगी।
+                </p>
+              </div>
+            </div>
+            <div className="text-[11px] text-amber-900 font-bold bg-amber-100 px-3 py-1.5 rounded-xl shrink-0 self-start sm:self-auto">
+              सहायता: +918877490845
+            </div>
+          </div>
+        ) : currentUser.status === 'Active' ? (
+          <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-950 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-xs">
+            <div className="flex items-center gap-2.5">
+              <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
+              <span className="text-xs font-bold text-emerald-900">
+                आपका खाता पूर्णतः सत्यापित है। आपके नामांकित पाठ्यक्रम <strong>{currentUser.planName || currentPlan.name}</strong> की सभी अध्ययन सामग्री उपलब्ध है।
+              </span>
+            </div>
+            <span className="text-[11px] font-mono font-bold text-emerald-800 bg-white/80 px-2.5 py-1 rounded-lg border border-emerald-200 shrink-0">
+              UTR: {currentUser.paymentRef || currentUser.utrNumber || 'UPI Verified'}
             </span>
-            <h1 className="text-xl sm:text-2xl font-black">
-              नमस्ते, {currentUser.name}! आपकी अध्ययन योजनाएं तैयार हैं
-            </h1>
-            <p className="text-xs sm:text-sm text-orange-100 max-w-xl">
-              नीचे दिए गए 7 कार्ड्स में से किसी भी प्लान पर क्लिक करें। उसी स्क्रीन पर उसका संपूर्ण स्टडी मटेरियल, AI टूल्स व सुविधाएं तुरंत लोड हो जाएंगी!
-            </p>
           </div>
+        ) : null}
+      </div>
 
-          <div className="flex items-center gap-3 shrink-0">
-            <button
-              onClick={() => onOpenStudyPage(activePlanId)}
-              className="px-4 py-2.5 rounded-xl bg-slate-950 text-white font-bold text-xs hover:bg-slate-900 transition-colors shadow flex items-center gap-1.5"
-            >
-              <BookOpen className="w-4 h-4 text-amber-400" />
-              <span>फुल स्क्रीन स्टडी मोड</span>
-            </button>
-          </div>
+      {/* 3. NAVIGATION TABS */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 w-full">
+        <div className="flex border-b border-slate-200 bg-white rounded-2xl px-3 sm:px-5 gap-1 sm:gap-3 text-xs sm:text-sm font-bold shadow-xs overflow-x-auto whitespace-nowrap">
+          <button
+            onClick={() => setActiveTab('study')}
+            className={`py-3.5 px-3 border-b-2 transition-colors flex items-center gap-1.5 ${
+              activeTab === 'study'
+                ? 'border-[#1e3a8a] text-[#1e3a8a]'
+                : 'border-transparent text-slate-500 hover:text-slate-900'
+            }`}
+          >
+            <BookOpen className="w-4 h-4" />
+            <span>अध्ययन हब व किट (Study Hub)</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('account')}
+            className={`py-3.5 px-3 border-b-2 transition-colors flex items-center gap-1.5 ${
+              activeTab === 'account'
+                ? 'border-[#1e3a8a] text-[#1e3a8a]'
+                : 'border-transparent text-slate-500 hover:text-slate-900'
+            }`}
+          >
+            <CreditCard className="w-4 h-4" />
+            <span>खाता व शुल्क विवरण (Account & Fee)</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('devices')}
+            className={`py-3.5 px-3 border-b-2 transition-colors flex items-center gap-1.5 ${
+              activeTab === 'devices'
+                ? 'border-[#1e3a8a] text-[#1e3a8a]'
+                : 'border-transparent text-slate-500 hover:text-slate-900'
+            }`}
+          >
+            <Laptop className="w-4 h-4" />
+            <span>कनेक्टेड डिवाइसेज ({deviceList.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('profile')}
+            className={`py-3.5 px-3 border-b-2 transition-colors flex items-center gap-1.5 ${
+              activeTab === 'profile'
+                ? 'border-[#1e3a8a] text-[#1e3a8a]'
+                : 'border-transparent text-slate-500 hover:text-slate-900'
+            }`}
+          >
+            <Edit3 className="w-4 h-4" />
+            <span>प्रोफाइल संपादन (My Profile)</span>
+          </button>
         </div>
+      </div>
 
-        {/* 7 COLORFUL BIG CARDS / TABS (पुराने 7 नामों के अनुसार) */}
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
-              <Layers className="w-4 h-4 text-orange-600" />
-              <span>7 अध्ययन योजनाएं (Select Plan to Open View):</span>
-            </h2>
-            <span className="text-xs text-slate-500 font-medium">1-क्लिक में सामग्री बदलें</span>
-          </div>
+      {/* 4. MAIN WORKSPACE BODY */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2.5 sm:gap-3">
+        {/* ============================================================= */}
+        {/* TAB 1: REAL STUDY HUB & ENROLLED COURSE KITS */}
+        {/* ============================================================= */}
+        {activeTab === 'study' && (
+          <div className="space-y-6 animate-fadeIn">
             
-            {/* 1. PLAN 01: Bal Vikas Access */}
-            <button
-              onClick={() => setActivePlanId('plan-01')}
-              className={`p-3 rounded-2xl text-left transition-all relative overflow-hidden border-2 shadow-sm ${
-                activePlanId === 'plan-01'
-                  ? 'bg-emerald-600 text-white border-emerald-500 ring-4 ring-emerald-300 scale-105 z-10'
-                  : 'bg-white hover:bg-emerald-50 text-slate-800 border-slate-200'
-              }`}
-            >
-              <span className="text-2xl block mb-1">🧒</span>
-              <span className="text-[10px] font-black uppercase opacity-75 block">Plan 01</span>
-              <h3 className="font-black text-xs leading-tight">Bal Vikas Access</h3>
-              <p className={`text-[10px] mt-1 line-clamp-1 ${activePlanId === 'plan-01' ? 'text-emerald-100' : 'text-slate-500'}`}>
-                AI टीचर व ई-बुक्स
-              </p>
-            </button>
+            {/* Active Enrolled Course Banner */}
+            <div className="p-6 rounded-3xl bg-gradient-to-r from-blue-900 via-[#1e3a8a] to-blue-950 text-white shadow-md flex flex-col md:flex-row items-center justify-between gap-5">
+              <div className="space-y-2 text-center md:text-left">
+                <div className="flex items-center justify-center md:justify-start gap-2">
+                  <span className="px-3 py-0.5 rounded-full bg-white/20 text-[#f3e5ab] text-xs font-black uppercase tracking-wider">
+                    PLAN 0{currentPlan.planNumber} • नामांकित पाठ्यक्रम
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/30 text-emerald-300 text-[10px] font-black border border-emerald-400/40">
+                    अधिकृत एक्सेस
+                  </span>
+                </div>
 
-            {/* 2. PLAN 02: Youth Skill Access */}
-            <button
-              onClick={() => setActivePlanId('plan-02')}
-              className={`p-3 rounded-2xl text-left transition-all relative overflow-hidden border-2 shadow-sm ${
-                activePlanId === 'plan-02'
-                  ? 'bg-blue-600 text-white border-blue-500 ring-4 ring-blue-300 scale-105 z-10'
-                  : 'bg-white hover:bg-blue-50 text-slate-800 border-slate-200'
-              }`}
-            >
-              <span className="text-2xl block mb-1">💼</span>
-              <span className="text-[10px] font-black uppercase opacity-75 block">Plan 02</span>
-              <h3 className="font-black text-xs leading-tight">Youth Skill Access</h3>
-              <p className={`text-[10px] mt-1 line-clamp-1 ${activePlanId === 'plan-02' ? 'text-blue-100' : 'text-slate-500'}`}>
-                रिज्यूम व AI टूल्स
-              </p>
-            </button>
+                <h1 className="text-xl sm:text-2xl font-black text-white">
+                  {currentPlan.name}
+                </h1>
+                <p className="text-xs sm:text-sm text-slate-200 max-w-2xl">
+                  {currentPlan.tagline} • कक्षा 1 से 12 तक के सचित्र NCERT नोट्स, वीडियो लेक्चर्स, दैनिक गृहकार्य व डिजिटल ट्रेसिंग पैड।
+                </p>
+              </div>
 
-            {/* 3. PLAN 03: Career & Job Access */}
-            <button
-              onClick={() => setActivePlanId('plan-03')}
-              className={`p-3 rounded-2xl text-left transition-all relative overflow-hidden border-2 shadow-sm ${
-                activePlanId === 'plan-03'
-                  ? 'bg-indigo-600 text-white border-indigo-500 ring-4 ring-indigo-300 scale-105 z-10'
-                  : 'bg-white hover:bg-indigo-50 text-slate-800 border-slate-200'
-              }`}
-            >
-              <span className="text-2xl block mb-1">🎯</span>
-              <span className="text-[10px] font-black uppercase opacity-75 block">Plan 03</span>
-              <h3 className="font-black text-xs leading-tight">Career & Job Access</h3>
-              <p className={`text-[10px] mt-1 line-clamp-1 ${activePlanId === 'plan-03' ? 'text-indigo-100' : 'text-slate-500'}`}>
-                6-12 NCERT वॉल्ट
-              </p>
-            </button>
+              <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+                <button
+                  onClick={() => onOpenStudyModal(currentPlan.id)}
+                  className="px-5 py-3 rounded-xl bg-gradient-to-r from-amber-500 via-[#d4af37] to-amber-600 text-slate-950 font-black text-xs hover:brightness-105 transition-all shadow-md flex items-center justify-center gap-2"
+                >
+                  <BookOpen className="w-4 h-4 text-slate-950" />
+                  <span>फुल स्क्रीन स्टडी हब खोलें →</span>
+                </button>
+                <button
+                  onClick={onOpenIdCard}
+                  className="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/20 transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <CreditCard className="w-4 h-4" />
+                  <span>आईडी कार्ड देखें</span>
+                </button>
+              </div>
+            </div>
 
-            {/* 4. PLAN 04: Family VIP Access */}
-            <button
-              onClick={() => setActivePlanId('plan-04')}
-              className={`p-3 rounded-2xl text-left transition-all relative overflow-hidden border-2 shadow-sm ${
-                activePlanId === 'plan-04'
-                  ? 'bg-rose-600 text-white border-rose-500 ring-4 ring-rose-300 scale-105 z-10'
-                  : 'bg-white hover:bg-rose-50 text-slate-800 border-slate-200'
-              }`}
-            >
-              <span className="text-2xl block mb-1">🏡</span>
-              <span className="text-[10px] font-black uppercase opacity-75 block">Plan 04</span>
-              <h3 className="font-black text-xs leading-tight">Family VIP Access</h3>
-              <p className={`text-[10px] mt-1 line-clamp-1 ${activePlanId === 'plan-04' ? 'text-rose-100' : 'text-slate-500'}`}>
-                पेरेंट्स कॉर्नर व पंचांग
-              </p>
-            </button>
+            {/* 7 Plans Authorization Explorer */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-black text-[#0f172a] uppercase tracking-wider flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-[#1e3a8a]" />
+                  <span>सभी 7 अध्ययन योजनाएं एवं अधिकृत एक्सेस स्थिति:</span>
+                </h3>
+                <span className="text-xs text-slate-500">क्लिक करके सामग्री देखें</span>
+              </div>
 
-            {/* 5. PLAN 05: Student & Exam Access */}
-            <button
-              onClick={() => setActivePlanId('plan-05')}
-              className={`p-3 rounded-2xl text-left transition-all relative overflow-hidden border-2 shadow-sm ${
-                activePlanId === 'plan-05'
-                  ? 'bg-amber-600 text-white border-amber-500 ring-4 ring-amber-300 scale-105 z-10'
-                  : 'bg-white hover:bg-amber-50 text-slate-800 border-slate-200'
-              }`}
-            >
-              <span className="text-2xl block mb-1">📚</span>
-              <span className="text-[10px] font-black uppercase opacity-75 block">Plan 05</span>
-              <h3 className="font-black text-xs leading-tight">Student & Exam Access</h3>
-              <p className={`text-[10px] mt-1 line-clamp-1 ${activePlanId === 'plan-05' ? 'text-amber-100' : 'text-slate-500'}`}>
-                प्रतियोगी परीक्षा नोट्स
-              </p>
-            </button>
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5 sm:gap-3">
+                {ioisMasterPlans.map((p) => {
+                  const isSelected = selectedPlanForWorkspace === p.id;
+                  const hasAccess = canUserAccessPlanKit(currentUser, p.id).hasAccess;
+                  const isUserEnrolledPlan = currentUser.planId === p.id;
 
-            {/* 6. PLAN 06: Agency Reseller Access */}
-            <button
-              onClick={() => setActivePlanId('plan-06')}
-              className={`p-3 rounded-2xl text-left transition-all relative overflow-hidden border-2 shadow-sm ${
-                activePlanId === 'plan-06'
-                  ? 'bg-purple-600 text-white border-purple-500 ring-4 ring-purple-300 scale-105 z-10'
-                  : 'bg-white hover:bg-purple-50 text-slate-800 border-slate-200'
-              }`}
-            >
-              <span className="text-2xl block mb-1">🚀</span>
-              <span className="text-[10px] font-black uppercase opacity-75 block">Plan 06</span>
-              <h3 className="font-black text-xs leading-tight">Agency Reseller Access</h3>
-              <p className={`text-[10px] mt-1 line-clamp-1 ${activePlanId === 'plan-06' ? 'text-purple-100' : 'text-slate-500'}`}>
-                रेफरल लिंक व शेयर
-              </p>
-            </button>
+                  return (
+                    <button
+                      key={p.id}
+                      onClick={() => setSelectedPlanForWorkspace(p.id)}
+                      className={`p-3.5 rounded-2xl text-left transition-all relative overflow-hidden border-2 shadow-xs flex flex-col justify-between ${
+                        isSelected
+                          ? 'bg-blue-50 border-[#1e3a8a] ring-2 ring-blue-300 scale-102 z-10'
+                          : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xl">
+                          {p.planNumber === 1 ? '🧒' : p.planNumber === 2 ? '💼' : p.planNumber === 3 ? '🎯' : p.planNumber === 4 ? '🏡' : p.planNumber === 5 ? '📚' : p.planNumber === 6 ? '🚀' : '👑'}
+                        </span>
+                        {hasAccess ? (
+                          <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[9px] font-black border border-emerald-300 flex items-center gap-0.5">
+                            <Unlock className="w-2.5 h-2.5" />
+                            <span>OPEN</span>
+                          </span>
+                        ) : (
+                          <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[9px] font-black border border-slate-300 flex items-center gap-0.5">
+                            <Lock className="w-2.5 h-2.5 text-slate-400" />
+                            <span>₹{p.price}</span>
+                          </span>
+                        )}
+                      </div>
 
-            {/* 7. PLAN 07: Lifetime Master Access */}
-            <button
-              onClick={() => setActivePlanId('plan-07')}
-              className={`p-3 rounded-2xl text-left transition-all relative overflow-hidden border-2 shadow-sm ${
-                activePlanId === 'plan-07'
-                  ? 'bg-gradient-to-tr from-amber-500 to-orange-600 text-white border-amber-400 ring-4 ring-amber-300 scale-105 z-10'
-                  : 'bg-white hover:bg-amber-50 text-slate-800 border-slate-200'
-              }`}
-            >
-              <span className="text-2xl block mb-1">👑</span>
-              <span className="text-[10px] font-black uppercase opacity-75 block">Plan 07</span>
-              <h3 className="font-black text-xs leading-tight">Lifetime Master Access</h3>
-              <p className={`text-[10px] mt-1 line-clamp-1 ${activePlanId === 'plan-07' ? 'text-amber-100' : 'text-slate-500'}`}>
-                सिक्योर क्लाउड ड्राइव
-              </p>
-            </button>
+                      <div>
+                        <span className="text-[10px] font-black uppercase tracking-wider text-[#1e3a8a] block">
+                          Plan 0{p.planNumber}
+                        </span>
+                        <h4 className="font-black text-xs text-[#0f172a] leading-tight mt-0.5 line-clamp-1">
+                          {p.name}
+                        </h4>
+                        {isUserEnrolledPlan && (
+                          <span className="inline-block mt-1 text-[9px] font-black text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">
+                            आपका प्लान
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Selected Plan Academic Suite Workspace */}
+            <div className="bg-white rounded-3xl border-2 border-slate-200 shadow-sm p-6 space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200 gap-3">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-900 text-[10px] font-black uppercase tracking-wider">
+                      PLAN 0{selectedWorkspacePlan.planNumber}
+                    </span>
+                    {isSelectedPlanUnlocked ? (
+                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                        <span>एक्सेस अधिकृत (Authorized)</span>
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-black flex items-center gap-1">
+                        <Lock className="w-3 h-3 text-amber-700" />
+                        <span>लॉक (Unlock with Admin Verification)</span>
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="text-xl font-black text-slate-900">
+                    {selectedWorkspacePlan.name}
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    {selectedWorkspacePlan.tagline}
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => onOpenStudyModal(selectedWorkspacePlan.id)}
+                  className="px-4 py-2.5 bg-[#1e3a8a] hover:bg-blue-900 text-white font-black text-xs rounded-xl transition-all shadow flex items-center gap-1.5 self-start sm:self-auto"
+                >
+                  <BookOpen className="w-4 h-4" />
+                  <span>सम्पूर्ण पाठ व स्टडी डायलॉग खोलें →</span>
+                </button>
+              </div>
+
+              {/* 4 Real Academic Feature Modules */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                
+                <div 
+                  onClick={() => onOpenStudyModal(selectedWorkspacePlan.id)}
+                  className="p-4 rounded-2xl bg-orange-50/60 border border-orange-200 hover:border-orange-400 cursor-pointer transition-all space-y-2 group"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-orange-600 text-white flex items-center justify-center shadow">
+                    <BookOpen className="w-5 h-5" />
+                  </div>
+                  <h5 className="font-black text-sm text-slate-900 group-hover:text-orange-700">
+                    सचित्र NCERT नोट्स
+                  </h5>
+                  <p className="text-xs text-slate-600">
+                    विषयवार अध्याय सारांश, महत्वपूर्ण सूत्र, नियम और डाउनलोड योग्य पीडीएफ नोट्स।
+                  </p>
+                </div>
+
+                <div 
+                  onClick={() => onOpenStudyModal(selectedWorkspacePlan.id)}
+                  className="p-4 rounded-2xl bg-red-50/60 border border-red-200 hover:border-red-400 cursor-pointer transition-all space-y-2 group"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-red-600 text-white flex items-center justify-center shadow">
+                    <Tv className="w-5 h-5" />
+                  </div>
+                  <h5 className="font-black text-sm text-slate-900 group-hover:text-red-700">
+                    IOIS आधिकारिक वीडियो कक्षाएं
+                  </h5>
+                  <p className="text-xs text-slate-600">
+                    प्रत्येक अध्याय के उच्च-गुणवत्ता वाले वीडियो पाठ व दृश्य एनीमेशन से सीखें।
+                  </p>
+                </div>
+
+                <div 
+                  onClick={() => onOpenStudyModal(selectedWorkspacePlan.id)}
+                  className="p-4 rounded-2xl bg-purple-50/60 border border-purple-200 hover:border-purple-400 cursor-pointer transition-all space-y-2 group"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow">
+                    <Pencil className="w-5 h-5" />
+                  </div>
+                  <h5 className="font-black text-sm text-slate-900 group-hover:text-purple-700">
+                    डिजिटल ट्रेसिंग पैड
+                  </h5>
+                  <p className="text-xs text-slate-600">
+                    अक्षर, शब्द, संख्याएं और वैज्ञानिक डायग्राम्स को स्क्रीन पर पेंसिल चलाकर बनाएं।
+                  </p>
+                </div>
+
+                <div 
+                  onClick={() => onOpenStudyModal(selectedWorkspacePlan.id)}
+                  className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200 hover:border-emerald-400 cursor-pointer transition-all space-y-2 group"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow">
+                    <FileCheck2 className="w-5 h-5" />
+                  </div>
+                  <h5 className="font-black text-sm text-slate-900 group-hover:text-emerald-700">
+                    दैनिक गृहकार्य जांच
+                  </h5>
+                  <p className="text-xs text-slate-600">
+                    प्रत्येक पाठ के बाद वस्तुनिष्ठ प्रश्न हल करें और तुरंत अंक व उत्तर व्याख्या पाएं।
+                  </p>
+                </div>
+
+              </div>
+
+            </div>
 
           </div>
-        </div>
+        )}
 
-        {/* ACTIVE PLAN DETAIL VIEW CONTAINER (बिना पेज लोड हुए उसी स्क्रीन पर) */}
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-md p-5 sm:p-7">
-          
-          {/* ------------------------------------------------------------- */}
-          {/* TAB 1: PLAN 01 - Bal Vikas Access */}
-          {/* ------------------------------------------------------------- */}
-          {activePlanId === 'plan-01' && (
-            <div className="space-y-6 animate-fadeIn">
+        {/* ============================================================= */}
+        {/* TAB 2: REAL ACCOUNT, PAYMENT & VERIFICATION STATUS */}
+        {/* ============================================================= */}
+        {activeTab === 'account' && (
+          <div className="space-y-6 animate-fadeIn text-xs">
+            
+            {/* Real Official Profile & Payment Details Card */}
+            <div className="p-6 rounded-3xl bg-white border-2 border-slate-200 shadow-sm space-y-6">
               
               <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200 gap-3">
-                <div>
-                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-wider">
-                    Plan 01 • Active Module
+                <div className="space-y-1">
+                  <span className="text-[10px] font-black uppercase text-blue-700">
+                    IOIS अधिकृत छात्र सत्यापन अभिलेख
                   </span>
-                  <h3 className="text-xl font-black text-slate-900 mt-1">
-                    PLAN 01: Bal Vikas Access (नर्सरी से क्लास 5)
+                  <h3 className="text-lg font-black text-slate-900">
+                    वास्तविक खाता व शुल्क विवरण (Verified Student Record)
                   </h3>
-                  <p className="text-xs text-slate-500">
-                    Google AI Studio पावर्ड AI Teacher Window, वॉइस माइक व सचित्र ई-बुक्स व्यूअर।
-                  </p>
                 </div>
 
                 <button
-                  onClick={() => onOpenStudyPage('plan-01')}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition-colors shadow flex items-center gap-1.5 self-start sm:self-auto"
+                  onClick={onOpenIdCard}
+                  className="px-4 py-2 rounded-xl bg-[#1e3a8a] text-white font-black text-xs hover:bg-blue-900 shadow flex items-center gap-1.5 self-start sm:self-auto"
                 >
-                  <span>बाल विकास पूरा हब खोलें →</span>
+                  <CreditCard className="w-4 h-4" />
+                  <span>डिजिटल पहचान पत्र (ID Card) खोलें</span>
                 </button>
               </div>
 
-              {/* 1. AI TEACHER WINDOW (बोलकर बात करें) */}
-              <div className="p-5 rounded-3xl bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-900 text-white space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 rounded-2xl bg-emerald-500 flex items-center justify-center text-2xl shadow-lg">
-                      🤖
-                    </div>
-                    <div>
-                      <h4 className="font-black text-base text-white">
-                        AI Teacher Window (Google AI Studio)
-                      </h4>
-                      <p className="text-xs text-emerald-200">
-                        माइक दबाकर सवाल पूछें, AI सीधे हिंदी में उत्तर व कविता सुनाएगा!
-                      </p>
-                    </div>
-                  </div>
+              {/* Data Grid: 100% Real User Information */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase block">विद्यार्थी का नाम</span>
+                  <span className="text-sm font-black text-slate-900 block">{currentUser.name}</span>
+                </div>
 
-                  <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-emerald-400 text-slate-950 uppercase">
-                    Live Active
+                <div className="p-4 rounded-2xl bg-blue-50/70 border border-blue-200 space-y-1">
+                  <span className="text-[10px] font-bold text-blue-700 uppercase block">आधिकारिक रोल नंबर (Non-Editable)</span>
+                  <span className="text-base font-mono font-black text-[#1e3a8a] block">
+                    {currentUser.rollNumber || currentUser.memberId}
                   </span>
                 </div>
 
-                {/* Mic & Interactive Bar */}
-                <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <div className="flex items-center space-x-3">
-                    <button
-                      onClick={startVoiceInput}
-                      className={`w-14 h-14 rounded-full flex items-center justify-center text-white transition-all shadow-lg ${
-                        isAiListening 
-                          ? 'bg-red-600 animate-ping ring-4 ring-red-300' 
-                          : 'bg-emerald-500 hover:bg-emerald-600 hover:scale-105 active:scale-95'
-                      }`}
-                    >
-                      <Mic className="w-6 h-6" />
-                    </button>
-                    <div>
-                      <span className="text-xs font-bold text-white block">
-                        {isAiListening ? '🔴 ध्यान से सुन रहे हैं... बोलिए!' : 'माइक दबाकर बोलें (Voice Mic)'}
-                      </span>
-                      <span className="text-[11px] text-emerald-200">
-                        उदा: "A for क्या होता है?", "क से कबूतर"
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Sample Quick Voice Questions */}
-                  <div className="flex flex-wrap gap-1.5 justify-center sm:justify-end">
-                    {['A for Apple', 'क से कबूतर', '2 का पहाड़ा'].map((sample, i) => (
-                      <button
-                        key={i}
-                        onClick={() => {
-                          setAiVoiceQuery(sample);
-                          handleVoiceQuery(sample);
-                        }}
-                        className="px-2.5 py-1 rounded-lg bg-white/20 hover:bg-white/30 text-white text-[11px] font-bold transition-colors"
-                      >
-                        {sample}
-                      </button>
-                    ))}
-                  </div>
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase block">सत्यापन स्थिति (Status)</span>
+                  <span className={`text-xs font-black inline-flex items-center gap-1 px-2.5 py-1 rounded-lg ${
+                    currentUser.status === 'Active' 
+                      ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                      : 'bg-amber-100 text-amber-900 border border-amber-300'
+                  }`}>
+                    {currentUser.status === 'Active' ? '✓ सक्रिय (Active & Verified)' : '⏳ सत्यापन प्रक्रियाधीन (Pending)'}
+                  </span>
                 </div>
 
-                {/* AI Response Display */}
-                {aiVoiceResponse && (
-                  <div className="p-3.5 rounded-2xl bg-white text-slate-900 shadow-md space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-black text-emerald-800 flex items-center gap-1.5">
-                        <Bot className="w-4 h-4 text-emerald-600" />
-                        <span>AI शिक्षक का उत्तर:</span>
-                      </span>
-                      <button
-                        onClick={() => speakText(aiVoiceResponse)}
-                        className="text-xs font-bold text-emerald-700 hover:underline flex items-center gap-1"
-                      >
-                        <Volume2 className="w-3.5 h-3.5" />
-                        <span>{isAiSpeaking ? 'रोकें' : 'बोलकर सुनें'}</span>
-                      </button>
-                    </div>
-                    <p className="text-xs sm:text-sm font-medium text-slate-800">
-                      {aiVoiceResponse}
-                    </p>
-                  </div>
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase block">नामांकित पाठ्यक्रम (Plan)</span>
+                  <span className="text-xs font-black text-slate-900 block">
+                    {currentUser.planName || currentPlan.name}
+                  </span>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-1">
+                  <span className="text-[10px] font-bold text-emerald-800 uppercase block">जमा की गई राशि (Amount Paid)</span>
+                  <span className="text-base font-black text-emerald-800 font-mono block">
+                    ₹{currentUser.amountPaid || 10}
+                  </span>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase block">भुगतान संदर्भ / UTR नंबर</span>
+                  <span className="text-xs font-mono font-bold text-slate-800 block truncate">
+                    {currentUser.paymentRef || currentUser.utrNumber || 'UPI / QR Verification'}
+                  </span>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase block">पंजीकृत मोबाइल नंबर</span>
+                  <span className="text-xs font-mono font-bold text-slate-800 block">
+                    {currentUser.phone}
+                  </span>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase block">पंजीकृत ईमेल</span>
+                  <span className="text-xs font-bold text-slate-800 block truncate">
+                    {currentUser.email || 'उपलब्ध नहीं'}
+                  </span>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase block">पंजीकरण दिनांक</span>
+                  <span className="text-xs font-bold text-slate-800 block">
+                    {currentUser.joinedDate || 'सत्र 2026'}
+                  </span>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1 sm:col-span-2 lg:col-span-3">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase block">स्थान / पता</span>
+                  <span className="text-xs font-medium text-slate-700 block">
+                    {currentUser.address ? `${currentUser.address}, ` : ''}{currentUser.city}, {currentUser.state}
+                  </span>
+                </div>
+
+              </div>
+
+              {/* Official Rules & Guidelines */}
+              <div className="p-4 rounded-2xl bg-blue-50 border border-blue-200 text-blue-950 space-y-1.5">
+                <div className="font-black text-xs flex items-center gap-1.5 text-blue-900">
+                  <ShieldCheck className="w-4 h-4 text-[#1e3a8a]" />
+                  <span>IOIS आधिकारिक सत्यापन दिशानिर्देश:</span>
+                </div>
+                <p className="text-[11px] leading-relaxed text-blue-900/90">
+                  आपका छात्र रोल नंबर और प्लान डेटाबेस स्तर पर सुरक्षित है। किसी भी प्रकार की सहायता, प्लान अपग्रेड या पेमेंट वेरिफिकेशन स्टेटस के लिए आप सीधे आधिकारिक हेल्पलाइन <strong>+918877490845</strong> पर संपर्क कर सकते हैं।
+                </p>
+              </div>
+
+            </div>
+
+          </div>
+        )}
+
+        {/* ============================================================= */}
+        {/* TAB 3: REAL CONNECTED DEVICES & SESSION SECURITY */}
+        {/* ============================================================= */}
+        {activeTab === 'devices' && (
+          <div className="p-6 rounded-3xl bg-white border-2 border-slate-200 shadow-sm space-y-5 text-xs animate-fadeIn">
+            
+            {/* Header Banner */}
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-950 via-slate-900 to-blue-900 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md border border-blue-800">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                  <span className="font-black text-sm text-white">
+                    मल्टी-डिवाइस सुरक्षा प्रबंधन (Connected Devices)
+                  </span>
+                </div>
+                <p className="text-[11px] text-blue-200">
+                  सक्रिय सत्र: <strong>{deviceList.length} / 4 डिवाइसेज</strong> • सुरक्षा सीमा: अधिकतम 4 समवर्ती डिवाइस
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleRefreshDevices}
+                  disabled={isRefreshingDevices}
+                  className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-colors flex items-center gap-1.5"
+                  title="Refresh Sessions"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingDevices ? 'animate-spin' : ''}`} />
+                  <span>रिफ्रेश</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmLogoutAll(true)}
+                  className="px-3.5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-black shadow transition-colors flex items-center gap-1.5"
+                >
+                  <Power className="w-3.5 h-3.5" />
+                  <span>सभी डिवाइसेज से लॉगआउट करें</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Action Feedback Banner */}
+            {deviceActionMsg && (
+              <div className={`p-3 rounded-xl border text-xs font-bold flex items-center gap-2 ${
+                deviceActionMsg.type === 'success'
+                  ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
+                  : 'bg-red-50 border-red-300 text-red-800'
+              }`}>
+                {deviceActionMsg.type === 'success' ? (
+                  <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                ) : (
+                  <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
                 )}
+                <span>{deviceActionMsg.text}</span>
               </div>
+            )}
 
-              {/* 2. E-BOOKS, POEMS & ABCD SLIDES VIEWER */}
-              <div className="space-y-3">
-                <h4 className="text-sm font-black text-slate-800 flex items-center gap-1.5">
-                  <BookOpen className="w-4 h-4 text-emerald-600" />
-                  <span>नर्सरी से क्लास 5 की ई-बुक्स, कविताएं व स्लाइड्स व्यूअर:</span>
-                </h4>
-
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                  {balVikasSlides.map((slide, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setSelectedBalVikasSlide(idx)}
-                      className={`p-3.5 rounded-2xl border-2 text-left transition-all ${
-                        selectedBalVikasSlide === idx
-                          ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-200'
-                          : 'border-slate-200 hover:border-emerald-300 bg-slate-50'
-                      }`}
-                    >
-                      <span className="text-3xl block mb-1">{slide.emoji}</span>
-                      <h5 className="font-bold text-xs text-slate-900">{slide.title}</h5>
-                      <p className="text-[10px] text-slate-500 mt-1 line-clamp-1">{slide.sample}</p>
-                    </button>
-                  ))}
+            {/* Logout from all devices Confirmation Box */}
+            {showConfirmLogoutAll && (
+              <div className="p-4 rounded-2xl bg-red-50 border-2 border-red-300 space-y-3 animate-in fade-in duration-200">
+                <div className="flex items-center gap-2 text-red-900 font-black text-sm">
+                  <ShieldAlert className="w-5 h-5 text-red-600 shrink-0" />
+                  <span>क्या आप सचमुच सभी कनेक्टेड डिवाइसेज से लॉगआउट करना चाहते हैं?</span>
                 </div>
-
-                {/* Active Slide Viewer Preview */}
-                <div className="p-5 rounded-3xl bg-emerald-50/70 border-2 border-emerald-200 text-center space-y-3">
-                  <span className="text-5xl">{balVikasSlides[selectedBalVikasSlide].emoji}</span>
-                  <h4 className="text-lg font-black text-emerald-950">
-                    {balVikasSlides[selectedBalVikasSlide].title}
-                  </h4>
-                  <div className="p-4 rounded-2xl bg-white border border-emerald-200 shadow-inner max-w-lg mx-auto">
-                    <p className="text-sm font-bold text-slate-800 leading-relaxed font-sans">
-                      {balVikasSlides[selectedBalVikasSlide].sample}
-                    </p>
-                  </div>
+                <p className="text-xs text-red-800 leading-relaxed">
+                  इस कार्रवाई से यह वर्तमान फोन/कंप्यूटर सहित आपके खाते से जुड़े सभी ब्राउज़रों व डिवाइसेज के सत्र तुरंत समाप्त हो जाएंगे। आपको और अन्य सभी कनेक्टेड डिवाइसेज पर दोबारा User ID व पासवर्ड दर्ज करके लॉगिन करना होगा।
+                </p>
+                <div className="flex items-center gap-2 pt-1">
                   <button
-                    onClick={() => speakText(balVikasSlides[selectedBalVikasSlide].sample)}
-                    className="px-4 py-2 bg-emerald-600 text-white font-bold text-xs rounded-xl hover:bg-emerald-700 shadow inline-flex items-center gap-1.5"
+                    type="button"
+                    disabled={isLoggingOutAll}
+                    onClick={handleLogoutAllDevices}
+                    className="px-4 py-2 rounded-xl bg-red-700 hover:bg-red-800 text-white font-black text-xs shadow transition-colors flex items-center gap-1.5 disabled:opacity-50"
                   >
-                    <Volume2 className="w-4 h-4" />
-                    <span>यह पाठ बोलकर सुनाएं</span>
+                    <Power className="w-3.5 h-3.5" />
+                    <span>{isLoggingOutAll ? 'लॉगआउट हो रहा है...' : 'हाँ, सभी डिवाइसेज से तुरंत लॉगआउट करें'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmLogoutAll(false)}
+                    className="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-bold text-xs transition-colors"
+                  >
+                    रद्द करें
                   </button>
                 </div>
               </div>
+            )}
 
-            </div>
-          )}
-
-          {/* ------------------------------------------------------------- */}
-          {/* TAB 2: PLAN 02 - Youth Skill Access */}
-          {/* ------------------------------------------------------------- */}
-          {activePlanId === 'plan-02' && (
-            <div className="space-y-6 animate-fadeIn">
-              
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200 gap-3">
-                <div>
-                  <span className="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[10px] font-black uppercase tracking-wider">
-                    Plan 02 • Active Module
-                  </span>
-                  <h3 className="text-xl font-black text-slate-900 mt-1">
-                    PLAN 02: Youth Skill Access
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    सीधे Resume Pack डाउनलोड करें व Free AI Tools Guide का उपयोग करें।
-                  </p>
-                </div>
-
-                <button
-                  onClick={() => onOpenStudyPage('plan-02')}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition-colors shadow flex items-center gap-1.5 self-start sm:self-auto"
+            {/* Connected Devices Cards */}
+            <div className="space-y-3 pt-1">
+              {deviceList.map((device) => (
+                <div
+                  key={device.id}
+                  className={`p-4 rounded-2xl border-2 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                    device.isCurrent
+                      ? 'bg-blue-50/70 border-blue-300 shadow-xs'
+                      : 'bg-slate-50 border-slate-200 hover:border-slate-300'
+                  }`}
                 >
-                  <span>यूथ स्किल पूरा हब खोलें →</span>
-                </button>
-              </div>
+                  <div className="flex items-start gap-3">
+                    <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-xs ${
+                      device.isCurrent ? 'bg-blue-600 text-white' : 'bg-white border border-slate-300 text-slate-700'
+                    }`}>
+                      {getDeviceIcon(device.deviceType)}
+                    </div>
 
-              {/* 1. RESUME PACK (Downloadable Ready-to-use Templates) */}
-              <div className="space-y-3">
-                <h4 className="text-sm font-black text-slate-800 flex items-center gap-1.5">
-                  <FileText className="w-4 h-4 text-blue-600" />
-                  <span>Resume Pack (ATS-Friendly Ready Templates):</span>
-                </h4>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {[
-                    { title: 'कॉलेज फ्रेशर रिज्यूम फॉर्मेट', tag: 'Freshers ATS 2026', desc: '12वीं व कॉलेज पास छात्रों के लिए सरल व आकर्षक फॉर्मेट।' },
-                    { title: 'कंप्यूटर ऑपरेटर व डाटा एंट्री CV', tag: 'Office Jobs', desc: 'MS Office, हिंदी/इंग्लिश टाइपिंग और डाटा एंट्री फॉर्मेट।' },
-                    { title: 'टीचिंग व प्राइवेट ट्यूटर रिज्यूम', tag: 'Teacher Standard', desc: 'होम ट्यूटर्स और स्कूल टीचर भर्ती हेतु विशेष प्रोफाइल।' }
-                  ].map((res, i) => (
-                    <div key={i} className="p-4 rounded-2xl bg-blue-50/50 border border-blue-200 space-y-2 flex flex-col justify-between">
-                      <div>
-                        <span className="text-[10px] font-black px-2 py-0.5 rounded bg-blue-600 text-white">
-                          {res.tag}
+                    <div className="space-y-1">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="font-black text-slate-900 text-sm">
+                          {device.deviceName}
                         </span>
-                        <h5 className="font-bold text-xs text-slate-900 mt-2">{res.title}</h5>
-                        <p className="text-[11px] text-slate-600 mt-1">{res.desc}</p>
-                      </div>
-
-                      <button
-                        onClick={() => {
-                          const dummyContent = `IOIS RESUME TEMPLATE - ${res.title}\n\nName: ${currentUser.name}\nContact: ${currentUser.phone}\nDesignation: Professional Candidate\nEducation: 12th Pass / Graduate\nSkills: Computer Basics, Communication, Office Tools\nIOIS Certified Member: ${currentUser.memberId}`;
-                          const blob = new Blob([dummyContent], { type: 'text/plain;charset=utf-8' });
-                          const url = URL.createObjectURL(blob);
-                          const a = document.createElement('a');
-                          a.href = url;
-                          a.download = `IOIS_Resume_${res.tag.replace(/\s+/g, '_')}.txt`;
-                          a.click();
-                        }}
-                        className="w-full mt-3 py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow flex items-center justify-center gap-1.5 transition-colors"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                        <span>टेम्पलेट डाउनलोड करें</span>
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* 2. FREE AI TOOLS GUIDE LIST */}
-              <div className="space-y-3 pt-2">
-                <h4 className="text-sm font-black text-slate-800 flex items-center gap-1.5">
-                  <Sparkles className="w-4 h-4 text-purple-600" />
-                  <span>Free AI Tools Guide (ChatGPT & Gemini Prompts):</span>
-                </h4>
-
-                <div className="space-y-2.5">
-                  {[
-                    { tool: 'ChatGPT & Gemini', title: 'असाइनमेंट व प्रोजेक्ट रिपोर्ट लिखवाने का मास्टर प्रॉम्प्ट', prompt: 'कृपया कक्षा 12 के विज्ञान प्रोजेक्ट "सौर ऊर्जा का महत्व" पर 500 शब्दों की एक आकर्षक रिपोर्ट तैयार करें, जिसमें परिचय, कार्यप्रणाली और निष्कर्ष शामिल हों।' },
-                    { tool: 'Job AI', title: 'कंपनी के लिए जॉब एप्लीकेशन कवर लेटर प्रॉम्प्ट', prompt: 'मैं फ्रेशर हूँ और डाटा एंट्री ऑपरेटर पद के लिए आवेदन कर रहा हूँ। मेरे लिए एक प्रभावशाली और विनम्र कवर लेटर हिंदी व अंग्रेजी में लिखें।' },
-                    { tool: 'Exam AI', title: 'किसी भी कठिन विषय को 5 मिनट में समझने का प्रॉम्प्ट', prompt: 'मुझे प्रकाश संश्लेषण (Photosynthesis) की प्रक्रिया को कक्षा 10 के स्तर पर सबसे सरल उदाहरण और 5 मुख्य बिंदुओं में समझाएं।' }
-                  ].map((guide, idx) => (
-                    <div key={idx} className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-purple-100 text-purple-800">
-                            {guide.tool}
+                        {device.isCurrent && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500 text-white flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                            वर्तमान डिवाइस (This Device)
                           </span>
-                          <span className="text-xs font-bold text-slate-900">{guide.title}</span>
-                        </div>
-                        <p className="text-[11px] text-slate-600 font-mono mt-1 bg-white p-2 rounded-lg border border-slate-200">
-                          "{guide.prompt}"
-                        </p>
+                        )}
                       </div>
 
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
+                        <span className="flex items-center gap-1">
+                          <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                          <span>{device.location || `${currentUser.city}, ${currentUser.state}`}</span>
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3.5 h-3.5 text-slate-400" />
+                          <span>लॉगिन: {device.loginTime}</span>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Device Actions */}
+                  <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                    {device.isCurrent ? (
                       <button
-                        onClick={() => handleCopyPrompt(guide.prompt, `prompt-${idx}`)}
-                        className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-colors shrink-0 flex items-center gap-1"
+                        type="button"
+                        onClick={() => handleLogoutDevice(device.id)}
+                        disabled={terminatingSessionId === device.id}
+                        className="px-3 py-1.5 rounded-xl bg-slate-200 hover:bg-red-100 hover:text-red-700 text-slate-700 text-xs font-bold transition-colors flex items-center gap-1"
                       >
-                        <Copy className="w-3.5 h-3.5" />
-                        <span>{copiedPromptKey === `prompt-${idx}` ? '✓ कॉपी हुआ' : 'प्रॉम्प्ट कॉपी'}</span>
+                        <LogOut className="w-3.5 h-3.5" />
+                        <span>लॉगआउट</span>
                       </button>
-                    </div>
-                  ))}
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleLogoutDevice(device.id)}
+                        disabled={terminatingSessionId === device.id}
+                        className="px-3 py-1.5 rounded-xl bg-red-100 hover:bg-red-200 text-red-700 text-xs font-black transition-colors flex items-center gap-1 disabled:opacity-50"
+                      >
+                        <Power className="w-3.5 h-3.5" />
+                        <span>{terminatingSessionId === device.id ? 'हट रहा है...' : 'सत्र समाप्त करें'}</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-
+              ))}
             </div>
-          )}
 
-          {/* ------------------------------------------------------------- */}
-          {/* TAB 3: PLAN 03 - Career & Job Access */}
-          {/* ------------------------------------------------------------- */}
-          {activePlanId === 'plan-03' && (
-            <div className="space-y-6 animate-fadeIn">
-              
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200 gap-3">
-                <div>
-                  <span className="px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 text-[10px] font-black uppercase tracking-wider">
-                    Plan 03 • Active Module
-                  </span>
-                  <h3 className="text-xl font-black text-slate-900 mt-1">
-                    PLAN 03: Career & Job Access (कक्षा 6 से 12)
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    NCERT Material Dropdown से क्लास चुनें व करियर रोडमैप्स पढ़ें।
-                  </p>
-                </div>
-
-                <button
-                  onClick={() => onOpenStudyPage('plan-03')}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl transition-colors shadow flex items-center gap-1.5 self-start sm:self-auto"
-                >
-                  <span>कक्षा 6-12 पूरा हब खोलें →</span>
-                </button>
+            {/* Security Tip Box */}
+            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 space-y-1.5">
+              <div className="font-black flex items-center gap-1.5 text-amber-900 text-xs">
+                <Lock className="w-4 h-4 text-amber-700" />
+                <span>सुरक्षा नीति:</span>
               </div>
-
-              {/* 1. NCERT MATERIAL DROPDOWN */}
-              <div className="p-5 rounded-3xl bg-indigo-50/70 border-2 border-indigo-200 space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-indigo-950 uppercase flex items-center gap-1.5">
-                    <BookOpen className="w-4 h-4 text-indigo-700" />
-                    <span>कक्षा 6 से 12 NCERT Material Dropdown:</span>
-                  </span>
-                  <span className="text-xs text-indigo-700 font-bold">तुरंत नोट्स पढ़ें</span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-700 block mb-1">
-                      अपनी कक्षा चुनें (Select Class):
-                    </label>
-                    <select
-                      value={selectedNcertClass}
-                      onChange={(e) => setSelectedNcertClass(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-bold bg-white text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      <option value="6">कक्षा 6 (Class 6)</option>
-                      <option value="7">कक्षा 7 (Class 7)</option>
-                      <option value="8">कक्षा 8 (Class 8)</option>
-                      <option value="9">कक्षा 9 (Class 9)</option>
-                      <option value="10">कक्षा 10 (Class 10 - बोर्ड)</option>
-                      <option value="11">कक्षा 11 (Class 11)</option>
-                      <option value="12">कक्षा 12 (Class 12 - बोर्ड)</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-700 block mb-1">
-                      विषय चुनें (Select Subject):
-                    </label>
-                    <select
-                      value={selectedNcertSubject}
-                      onChange={(e) => setSelectedNcertSubject(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-bold bg-white text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      <option value="विज्ञान (Science)">विज्ञान (Science)</option>
-                      <option value="गणित (Mathematics)">गणित (Mathematics)</option>
-                      <option value="सामाजिक विज्ञान (Social Studies)">सामाजिक विज्ञान (Social Studies)</option>
-                      <option value="हिंदी (Hindi)">हिंदी (Hindi)</option>
-                      <option value="अंग्रेजी (English)">अंग्रेजी (English)</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Instant Reader Preview Card */}
-                <div className="p-4 rounded-2xl bg-white border border-indigo-200 shadow-sm space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-black text-indigo-900">
-                      📖 कक्षा {selectedNcertClass} • {selectedNcertSubject} नोट्स सारांश
-                    </span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
-                      100% NCERT Verified
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-700 leading-relaxed">
-                    यह अध्याय कक्षा {selectedNcertClass} के नवीनतम NCERT सिलेबस पर आधारित है। इसमें मुख्य परिभाषाएं, फॉर्मूले, डायग्राम्स और पिछले 5 वर्षों के बोर्ड परीक्षा प्रश्नों के सटीक उत्तर शामिल हैं।
-                  </p>
-                  <button
-                    onClick={() => onOpenStudyPage('plan-03')}
-                    className="text-xs font-bold text-indigo-600 hover:text-indigo-800 underline flex items-center gap-1"
-                  >
-                    <span>पूरी पुस्तक और अध्याय-वार हल खोलें →</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* 2. CAREER GUIDANCE & JOB ROADMAPS */}
-              <div className="space-y-3">
-                <h4 className="text-sm font-black text-slate-800 flex items-center gap-1.5">
-                  <Compass className="w-4 h-4 text-indigo-600" />
-                  <span>करियर गाइडेंस और नौकरी के रोडमैप्स (Career Radars):</span>
-                </h4>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {[
-                    { title: '10वीं के बाद स्ट्रीम चयन', badge: 'Science/Commerce/Arts', desc: 'अपनी रुचि व क्षमताओं के अनुसार सही विषय चुनने का वैज्ञानिक तरीका।' },
-                    { title: '12वीं के बाद टॉप सरकारी नौकरियां', badge: 'SSC, Railway, Police', desc: 'कम उम्र में बिना लाखों खर्च किए सरकारी नौकरी पाने के विकल्प।' },
-                    { title: 'IT व डिजिटल स्किल्स करियर', badge: 'Web, Coding, AI', desc: 'घर बैठे फ्रीलांसिंग और टेक कंपनियों में हाई-पेइंग जॉब का रोडमैप।' }
-                  ].map((cr, idx) => (
-                    <div key={idx} className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
-                      <span className="text-[10px] font-black px-2 py-0.5 rounded bg-indigo-100 text-indigo-800">
-                        {cr.badge}
-                      </span>
-                      <h5 className="font-bold text-xs text-slate-900 mt-1">{cr.title}</h5>
-                      <p className="text-[11px] text-slate-600">{cr.desc}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
+              <p className="text-[11px] leading-relaxed text-amber-900/90">
+                अपने User ID और पासवर्ड को किसी के साथ साझा न करें। यदि आपको कोई अज्ञात डिवाइस दिखे, तो तुरंत <strong>"सभी डिवाइसेज से लॉगआउट करें"</strong> और पासवर्ड रीसेट करें।
+              </p>
             </div>
-          )}
 
-          {/* ------------------------------------------------------------- */}
-          {/* TAB 4: PLAN 04 - Family VIP Access */}
-          {/* ------------------------------------------------------------- */}
-          {activePlanId === 'plan-04' && (
-            <div className="space-y-6 animate-fadeIn">
-              
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200 gap-3">
-                <div>
-                  <span className="px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 text-[10px] font-black uppercase tracking-wider">
-                    Plan 04 • Active Module
-                  </span>
-                  <h3 className="text-xl font-black text-slate-900 mt-1">
-                    PLAN 04: Family VIP Access (पेरेंट्स कॉर्नर)
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    डेली पंचांग, सुविचार, बच्चों की पढ़ाई ट्रैक करने का विकल्प व पारिवारिक सुरक्षा।
-                  </p>
-                </div>
+          </div>
+        )}
 
-                <button
-                  onClick={() => onOpenStudyPage('plan-04')}
-                  className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl transition-colors shadow flex items-center gap-1.5 self-start sm:self-auto"
-                >
-                  <span>फैमिली हब खोलें →</span>
-                </button>
+        {/* ============================================================= */}
+        {/* TAB 4: REAL PROFILE EDIT FORM */}
+        {/* ============================================================= */}
+        {activeTab === 'profile' && (
+          <div className="p-6 rounded-3xl bg-white border-2 border-slate-200 shadow-sm space-y-5 animate-fadeIn text-xs">
+            
+            <div className="pb-3 border-b border-slate-200">
+              <h3 className="text-base font-black text-slate-900">
+                छात्र प्रोफाइल विवरण संपादन (Edit My Profile)
+              </h3>
+              <p className="text-xs text-slate-500">
+                नाम, संपर्क नंबर, ईमेल व पते की जानकारी अद्यतन करें। (रोल नंबर व प्लान सुरक्षा कारणों से केवल एडमिन द्वारा बदले जा सकते हैं।)
+              </p>
+            </div>
+
+            {profileSuccessMsg && (
+              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-bold flex items-center gap-2">
+                <Check className="w-4 h-4 text-emerald-600" />
+                <span>{profileSuccessMsg}</span>
               </div>
+            )}
 
-              {/* 1. DAILY PANCHANG & SUVICHAR */}
+            <form onSubmit={handleSaveProfile} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 
-                <div className="p-4 rounded-3xl bg-amber-50 border border-amber-200 space-y-2">
-                  <div className="flex items-center gap-2 text-amber-900 font-black text-xs">
-                    <Calendar className="w-4 h-4 text-amber-700" />
-                    <span>दैनिक पंचांग (Daily Panchang):</span>
-                  </div>
-                  <div className="text-xs text-slate-800 space-y-1">
-                    <p><strong>तिथि:</strong> शुक्ल पक्ष, पंचमी</p>
-                    <p><strong>वार:</strong> शुभ दिन • विक्रम संवत 2082</p>
-                    <p><strong>सूर्योदय:</strong> प्रातः 06:12 AM | <strong>सूर्यास्त:</strong> सायं 06:18 PM</p>
-                    <p className="text-[11px] text-amber-800 font-semibold pt-1">
-                      आज का शुभ समय (अभिजीत मुहूर्त): 11:45 AM - 12:35 PM
-                    </p>
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-3xl bg-rose-50 border border-rose-200 space-y-2">
-                  <div className="flex items-center gap-2 text-rose-900 font-black text-xs">
-                    <Heart className="w-4 h-4 text-rose-700" />
-                    <span>आज का प्रेरणादायक सुविचार:</span>
-                  </div>
-                  <blockquote className="text-xs text-slate-800 italic leading-relaxed pt-1">
-                    "विद्या ददाति विनयं, विनयाद् याति पात्रताम्।<br />
-                    शिक्षा केवल किताबों तक सीमित नहीं है, यह अच्छे संस्कारों और आत्म-निर्भरता की बुनियाद है।"
-                  </blockquote>
-                  <span className="text-[10px] text-rose-700 font-bold block pt-1">— IOIS संस्कार वाटिका</span>
-                </div>
-
-              </div>
-
-              {/* 2. CHILD STUDY TRACKER & SCREEN SAFETY */}
-              <div className="p-4 rounded-3xl bg-slate-50 border border-slate-200 space-y-3">
-                <span className="text-xs font-black text-slate-900 flex items-center gap-1.5">
-                  <Shield className="w-4 h-4 text-emerald-600" />
-                  <span>बच्चों की पढ़ाई और मोबाइल स्क्रीन टाइम ट्रैकिंग (Parent Control):</span>
-                </span>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div className="p-3 rounded-2xl bg-white border border-slate-200 text-center">
-                    <span className="text-xl font-black text-emerald-700 block">45 मिनट</span>
-                    <span className="text-[11px] text-slate-600">दैनिक सुझाई गई डिजिटल पढ़ाई</span>
-                  </div>
-                  <div className="p-3 rounded-2xl bg-white border border-slate-200 text-center">
-                    <span className="text-xl font-black text-blue-700 block">100% Safe</span>
-                    <span className="text-[11px] text-slate-600">विज्ञापन-मुक्त सुरक्षित कंटेंट</span>
-                  </div>
-                  <div className="p-3 rounded-2xl bg-white border border-slate-200 text-center">
-                    <span className="text-xl font-black text-purple-700 block">दैनिक जांच</span>
-                    <span className="text-[11px] text-slate-600">अक्षर ट्रेसिंग व गृहकार्य स्कोर</span>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-          )}
-
-          {/* ------------------------------------------------------------- */}
-          {/* TAB 5: PLAN 05 - Student & Exam Access */}
-          {/* ------------------------------------------------------------- */}
-          {activePlanId === 'plan-05' && (
-            <div className="space-y-6 animate-fadeIn">
-              
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200 gap-3">
-                <div>
-                  <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-black uppercase tracking-wider">
-                    Plan 05 • Active Module
-                  </span>
-                  <h3 className="text-xl font-black text-slate-900 mt-1">
-                    PLAN 05: Student & Exam Access
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    कॉम्पिटिटिव एग्जाम्स (प्रतियोगी परीक्षाओं) के शॉर्ट नोट्स की डायरेक्ट लाइब्रेरी।
-                  </p>
-                </div>
-
-                <button
-                  onClick={() => onOpenStudyPage('plan-05')}
-                  className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl transition-colors shadow flex items-center gap-1.5 self-start sm:self-auto"
-                >
-                  <span>प्रतियोगी परीक्षा लाइब्रेरी खोलें →</span>
-                </button>
-              </div>
-
-              {/* 1. COMPETITIVE EXAM SHORT NOTES DIRECT LIBRARY */}
-              <div className="space-y-3">
-                <h4 className="text-sm font-black text-slate-800 flex items-center gap-1.5">
-                  <Award className="w-4 h-4 text-amber-600" />
-                  <span>प्रतियोगी परीक्षाओं के शॉर्ट नोट्स डायरेक्ट लाइब्रेरी:</span>
-                </h4>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                  {[
-                    { exam: 'SSC CGL / CHSL', icon: '🏛️', topics: 'Maths शॉर्ट ट्रिक्स, Reasoning, GS कैप्सूल' },
-                    { exam: 'Railway NTPC & Group D', icon: '🚆', topics: 'सामान्य विज्ञान, 10 वर्षों के हल प्रश्न' },
-                    { exam: 'Police & Defense Exams', icon: '👮', topics: 'UP/Bihar पुलिस कांस्टेबल, NDA, अग्निवीर नोट्स' },
-                    { exam: 'Banking PO & Clerk', icon: '🏦', topics: 'बैंकिंग अवेयरनेस, स्पीड कैलकुलेशन ट्रिक्स' }
-                  ].map((ex, i) => (
-                    <div key={i} className="p-4 rounded-2xl bg-amber-50/50 border border-amber-200 space-y-2 flex flex-col justify-between">
-                      <div>
-                        <span className="text-2xl block mb-1">{ex.icon}</span>
-                        <h5 className="font-bold text-xs text-slate-900">{ex.exam}</h5>
-                        <p className="text-[11px] text-slate-600 mt-1">{ex.topics}</p>
-                      </div>
-
-                      <button
-                        onClick={() => onOpenStudyPage('plan-05')}
-                        className="w-full mt-2 py-1.5 px-3 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-1"
-                      >
-                        <BookOpen className="w-3.5 h-3.5" />
-                        <span>नोट्स पढ़ें</span>
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* 2. DAILY CURRENT AFFAIRS & GK CAPSULE */}
-              <div className="p-4 rounded-3xl bg-slate-50 border border-slate-200 space-y-2">
-                <span className="text-xs font-black text-slate-900 block">
-                  ⚡ दैनिक करंट अफेयर्स व स्टेटिक GK कम्पेंडियम:
-                </span>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  रोजाना सुबह अपडेट होने वाले राष्ट्रीय व अंतरराष्ट्रीय घटनाक्रम, महत्वपूर्ण दिवस, नई नियुक्तियां और खेल पुरस्कारों के 10 मुख्य बिंदु।
-                </p>
-                <div className="pt-1 flex items-center gap-3 text-xs text-amber-800 font-bold">
-                  <span>• 10 साल के सॉल्व्ड पेपर्स उपलब्ध</span>
-                  <span>• टेलीग्राम स्टडी सर्कल सपोर्ट</span>
-                </div>
-              </div>
-
-            </div>
-          )}
-
-          {/* ------------------------------------------------------------- */}
-          {/* TAB 6: PLAN 06 - Agency Reseller Access */}
-          {/* ------------------------------------------------------------- */}
-          {activePlanId === 'plan-06' && (
-            <div className="space-y-6 animate-fadeIn">
-              
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200 gap-3">
-                <div>
-                  <span className="px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800 text-[10px] font-black uppercase tracking-wider">
-                    Plan 06 • Active Module
-                  </span>
-                  <h3 className="text-xl font-black text-slate-900 mt-1">
-                    PLAN 06: Agency Reseller Access
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    यूनिक रेफरल लिंक जेनरेट करें, 1-क्लिक शेयर करें और मार्केटिंग इमेजेस डाउनलोड करें।
-                  </p>
-                </div>
-
-                <button
-                  onClick={() => onOpenStudyPage('plan-06')}
-                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl transition-colors shadow flex items-center gap-1.5 self-start sm:self-auto"
-                >
-                  <span>एजेंसी रीसेलर हब खोलें →</span>
-                </button>
-              </div>
-
-              {/* 1. UNIQUE REFERRAL LINK GENERATOR BOX */}
-              <div className="p-5 rounded-3xl bg-gradient-to-r from-purple-900 via-slate-900 to-indigo-950 text-white space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-amber-400 uppercase tracking-wider">
-                    आपका पर्सनल रेफरल लिंक (Unique Referral Box)
-                  </span>
-                  <span className="px-2 py-0.5 rounded bg-emerald-500 text-slate-950 text-[10px] font-black">
-                    70% तक इंस्टेंट पेआउट
-                  </span>
-                </div>
-
-                {/* Link Field */}
-                <div className="flex flex-col sm:flex-row items-center gap-2">
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">विद्यार्थी का नाम *</label>
                   <input
                     type="text"
-                    readOnly
-                    value={referralUrl}
-                    className="w-full px-3 py-2.5 rounded-xl bg-white/10 border border-white/20 text-xs font-mono text-white outline-none"
+                    required
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="w-full p-2.5 rounded-xl border border-slate-300 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600 font-bold"
                   />
-                  <button
-                    onClick={handleCopyReferral}
-                    className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs shrink-0 flex items-center justify-center gap-1.5 transition-colors shadow"
-                  >
-                    <Copy className="w-4 h-4" />
-                    <span>{copiedReferral ? '✓ कॉपी हुआ!' : 'कॉपी करें'}</span>
-                  </button>
                 </div>
 
-                {/* 1-Click WhatsApp & Telegram Share Buttons */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                  <button
-                    onClick={() => {
-                      const enc = encodeURIComponent(referralShareText);
-                      window.open(`https://api.whatsapp.com/send?text=${enc}`, '_blank');
-                    }}
-                    className="py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs flex items-center justify-center gap-2 shadow transition-transform hover:scale-105"
-                  >
-                    <Share2 className="w-4 h-4" />
-                    <span>व्हाट्सएप पर 1-क्लिक शेयर</span>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      const enc = encodeURIComponent(referralShareText);
-                      window.open(`https://t.me/share/url?url=${encodeURIComponent(referralUrl)}&text=${enc}`, '_blank');
-                    }}
-                    className="py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow transition-colors"
-                  >
-                    <span>टेलीग्राम पर 1-क्लिक शेयर</span>
-                  </button>
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">कक्षा / स्तर *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editDesignation}
+                    onChange={(e) => setEditDesignation(e.target.value)}
+                    placeholder="उदा. Class 10th या BCA"
+                    className="w-full p-2.5 rounded-xl border border-slate-300 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
                 </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">पंजीकृत मोबाइल नंबर *</label>
+                  <input
+                    type="tel"
+                    required
+                    value={editPhone}
+                    onChange={(e) => setEditPhone(e.target.value)}
+                    className="w-full p-2.5 rounded-xl border border-slate-300 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600 font-mono"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">ईमेल आईडी</label>
+                  <input
+                    type="email"
+                    value={editEmail}
+                    onChange={(e) => setEditEmail(e.target.value)}
+                    placeholder="example@gmail.com"
+                    className="w-full p-2.5 rounded-xl border border-slate-300 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">शहर / जिला *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editCity}
+                    onChange={(e) => setEditCity(e.target.value)}
+                    className="w-full p-2.5 rounded-xl border border-slate-300 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">राज्य *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editState}
+                    onChange={(e) => setEditState(e.target.value)}
+                    className="w-full p-2.5 rounded-xl border border-slate-300 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                </div>
+
+                <div className="space-y-1 sm:col-span-2">
+                  <label className="font-bold text-slate-700">पूरा पता (House / Village / Post / PIN)</label>
+                  <input
+                    type="text"
+                    value={editAddress}
+                    onChange={(e) => setEditAddress(e.target.value)}
+                    placeholder="गांव/मोहल्ला, पोस्ट ऑफिस, पिन कोड"
+                    className="w-full p-2.5 rounded-xl border border-slate-300 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                </div>
+
               </div>
 
-              {/* 2. MARKETING FLYERS & IMAGES DOWNLOAD */}
-              <div className="space-y-3">
-                <h4 className="text-sm font-black text-slate-800 flex items-center gap-1.5">
-                  <Download className="w-4 h-4 text-purple-600" />
-                  <span>मार्केटिंग इमेजेस और कैटलॉग (Marketing Flyers):</span>
-                </h4>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {[
-                    { title: 'बाल विकास (₹10) पोस्टर', size: '1080x1080 (Insta/WhatsApp)', tag: 'Plan 01 Flyer' },
-                    { title: '7 प्लांस सम्पूर्ण कैटलॉग', size: 'PDF / Image Format', tag: 'Master Catalog' },
-                    { title: '70% पेआउट इंसेंटिव बैनर', size: 'Social Media Banner', tag: 'Income Banner' }
-                  ].map((flyer, idx) => (
-                    <div key={idx} className="p-3.5 rounded-2xl bg-purple-50/50 border border-purple-200 space-y-2 flex flex-col justify-between">
-                      <div>
-                        <span className="text-[10px] font-black px-2 py-0.5 rounded bg-purple-600 text-white">
-                          {flyer.tag}
-                        </span>
-                        <h5 className="font-bold text-xs text-slate-900 mt-2">{flyer.title}</h5>
-                        <p className="text-[11px] text-slate-500">{flyer.size}</p>
-                      </div>
-
-                      <button
-                        onClick={() => {
-                          const flyerData = `IOIS MARKETING FLYER\nTitle: ${flyer.title}\nReferral Link: ${referralUrl}\nHelpline: 8877490845\nIOIS India Official`;
-                          const blob = new Blob([flyerData], { type: 'text/plain;charset=utf-8' });
-                          const url = URL.createObjectURL(blob);
-                          const a = document.createElement('a');
-                          a.href = url;
-                          a.download = `IOIS_${flyer.tag.replace(/\s+/g, '_')}.txt`;
-                          a.click();
-                        }}
-                        className="w-full mt-2 py-1.5 px-3 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow flex items-center justify-center gap-1.5 transition-colors"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                        <span>पोस्टर डाउनलोड</span>
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-            </div>
-          )}
-
-          {/* ------------------------------------------------------------- */}
-          {/* TAB 7: PLAN 07 - Lifetime Master Access */}
-          {/* ------------------------------------------------------------- */}
-          {activePlanId === 'plan-07' && (
-            <div className="space-y-6 animate-fadeIn">
-              
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200 gap-3">
-                <div>
-                  <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-black uppercase tracking-wider">
-                    Plan 07 • Supreme Master
-                  </span>
-                  <h3 className="text-xl font-black text-slate-900 mt-1">
-                    PLAN 07: Lifetime Master Access
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    सिक्योर क्लाउड ड्राइव का मास्टर एक्सेस लिंक व VIP पार्टनर गोल्डन बैज।
-                  </p>
-                </div>
-
+              <div className="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
                 <button
-                  onClick={() => onOpenStudyPage('plan-07')}
-                  className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold text-xs rounded-xl transition-colors shadow flex items-center gap-1.5 self-start sm:self-auto"
+                  type="submit"
+                  disabled={profileLoading}
+                  className="py-2.5 px-6 bg-[#1e3a8a] hover:bg-blue-900 text-white rounded-xl text-xs font-bold shadow flex items-center gap-1.5 transition-colors disabled:opacity-50"
                 >
-                  <span>लाइफटाइम मास्टर हब खोलें →</span>
+                  <Save className="w-4 h-4" />
+                  <span>{profileLoading ? 'सुरक्षित हो रहा है...' : 'प्रोफाइल सुरक्षित करें (Save Profile)'}</span>
                 </button>
               </div>
 
-              {/* 1. SECURE CLOUD DRIVE ACCESS LINK */}
-              <div className="p-6 rounded-3xl bg-gradient-to-r from-amber-500 via-orange-600 to-amber-700 text-white space-y-4 shadow-xl">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 rounded-2xl bg-white text-slate-950 flex items-center justify-center text-3xl shadow-inner">
-                      👑
-                    </div>
-                    <div>
-                      <h4 className="font-black text-lg text-white">
-                        Secure Cloud Drive Master Link (10 लाख+ पेज)
-                      </h4>
-                      <p className="text-xs text-amber-100">
-                        कक्षा 1 से 12 एवं समस्त 6 प्लांस का पूरा स्टडी मटेरियल आजीवन अनलॉक्ड!
-                      </p>
-                    </div>
-                  </div>
+            </form>
 
-                  <span className="px-3 py-1 rounded-full bg-white text-slate-950 text-xs font-black uppercase shadow">
-                    VIP UNLOCKED
-                  </span>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-slate-950/40 backdrop-blur-md border border-white/20 flex flex-col sm:flex-row items-center justify-between gap-3">
-                  <div>
-                    <span className="text-xs font-black text-amber-300 block">
-                      📁 मास्टर रिपॉजिटरी ड्राइव यूआरएल:
-                    </span>
-                    <span className="text-xs font-mono text-slate-200">
-                      https://ioisplatform.github.io/student/master-vault/all-access
-                    </span>
-                  </div>
-
-                  <button
-                    onClick={() => onOpenStudyPage('plan-07')}
-                    className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white hover:bg-amber-50 text-slate-950 font-black text-xs shadow-lg transition-transform hover:scale-105 active:scale-95 shrink-0 flex items-center justify-center gap-1.5"
-                  >
-                    <ExternalLink className="w-4 h-4 text-orange-600" />
-                    <span>क्लाउड ड्राइव खोलें (Open Cloud Drive)</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* 2. VIP PARTNER GOLDEN BADGE & DIRECT ADMIN SUPPORT */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                
-                <div className="p-5 rounded-3xl bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-300 space-y-2 text-center">
-                  <div className="text-4xl">🌟</div>
-                  <h4 className="font-black text-base text-amber-950">
-                    VIP Partner Verified Badge
-                  </h4>
-                  <p className="text-xs text-slate-600">
-                    सदस्य: <strong>{currentUser.name}</strong> • ID: <strong>{currentUser.memberId}</strong>
-                  </p>
-                  <span className="inline-block px-3 py-1 rounded-full bg-amber-400 text-slate-950 font-black text-xs">
-                    🥇 ऑफिशियल लाइफटाइम पार्टनर
-                  </span>
-                </div>
-
-                <div className="p-5 rounded-3xl bg-slate-50 border border-slate-200 space-y-2">
-                  <h4 className="font-black text-xs text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                    <Shield className="w-4 h-4 text-emerald-600" />
-                    <span>डायरेक्ट एडमिन टीम सपोर्ट (Priority 15-Min SLA):</span>
-                  </h4>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    प्लान 07 के सदस्यों को मुख्य डेवलपर एवं एडमिन टीम से सीधा संपर्क प्राप्त होता है।
-                  </p>
-                  <div className="p-2.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-800">
-                    📞 VIP हेल्पलाइन: <a href="tel:8877490845" className="text-emerald-700 underline">+91 8877490845</a>
-                  </div>
-                </div>
-
-              </div>
-
-            </div>
-          )}
-
-        </div>
+          </div>
+        )}
 
       </main>
-
-      {/* DASHBOARD BOTTOM STRIP */}
-      <footer className="bg-slate-900 border-t border-slate-800 text-slate-400 text-xs py-4 px-4 text-center">
-        <p>© {new Date().getFullYear()} IOIS Platform • IOIS India. समस्त अधिकार सुरक्षित। • छात्र हेल्पलाइन: 8877490845</p>
-      </footer>
 
     </div>
   );

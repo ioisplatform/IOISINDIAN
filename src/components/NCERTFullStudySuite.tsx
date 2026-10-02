@@ -32,6 +32,7 @@ import {
   Image as ImageIcon
 } from 'lucide-react';
 import { BAL_VIKAS_PRINTABLE_PAGES, BalVikasPrintablePage } from './StudyResourceViewerModal';
+import { NurseryAlphabetWorkbook } from './NurseryAlphabetWorkbook';
 
 interface NCERTFullStudySuiteProps {
   initialClass?: number;
@@ -289,7 +290,7 @@ export const NCERTFullStudySuite: React.FC<NCERTFullStudySuiteProps> = ({
   initialClass = 1,
   initialSubject = 'math'
 }) => {
-  const [activeTab, setActiveTab] = useState<'book' | 'hindi' | 'english' | 'math' | 'tables' | 'operations' | 'chapters' | 'download'>('chapters');
+  const [activeTab, setActiveTab] = useState<'book' | 'hindi' | 'english' | 'math' | 'tables' | 'operations' | 'chapters' | 'download' | 'workbook'>('chapters');
   const [selectedClass, setSelectedClass] = useState<number>(initialClass);
   const [selectedTable, setSelectedTable] = useState<number>(2);
   const [enlargedPrintPage, setEnlargedPrintPage] = useState<BalVikasPrintablePage | null>(null);
@@ -532,6 +533,15 @@ export const NCERTFullStudySuite: React.FC<NCERTFullStudySuiteProps> = ({
           </button>
 
           <button
+            onClick={() => setActiveTab('workbook')}
+            className={`px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 ${
+              activeTab === 'workbook' ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg ring-2 ring-orange-400/40' : 'bg-slate-900 text-orange-400 hover:text-white border border-orange-500/40'
+            }`}
+          >
+            <span>🎨 A-Z नर्सरी वर्कबुक (26 Pages)</span>
+          </button>
+
+          <button
             onClick={() => setActiveTab('download')}
             className={`px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 ${
               activeTab === 'download' ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg ring-2 ring-orange-400/40' : 'bg-slate-900 text-amber-300 hover:text-white border border-amber-500/40'
@@ -560,7 +570,7 @@ export const NCERTFullStudySuite: React.FC<NCERTFullStudySuiteProps> = ({
                 कक्षा {selectedClass} के 5 प्रमुख अध्याय एवं संपूर्ण अध्ययन सामग्री
               </h3>
               <p className="text-xs text-slate-400 mt-1">
-                प्रत्येक अध्याय के आगे दिए गए <strong>"📖 अध्याय पढ़ें"</strong> बटन पर क्लिक करके सीधे डायलॉग बॉक्स में पूरा पाठ पढ़ें।
+                प्रत्येक अध्याय के आगे दिए गए <strong>"📖 अध्याय पढ़ें"</strong> बटन पर क्लिक करके पूरा पाठ पढ़ें।
               </p>
             </div>
 
@@ -651,21 +661,21 @@ export const NCERTFullStudySuite: React.FC<NCERTFullStudySuiteProps> = ({
             <div className="bg-slate-950 p-4 sm:p-5 flex items-center justify-between border-b border-slate-800">
               <div className="flex items-center space-x-3 min-w-0">
                 <span className="w-10 h-10 rounded-2xl bg-indigo-600 text-white font-black text-sm flex items-center justify-center shrink-0 shadow">
-                  {openChapterModal.ch}
+                  {openChapterModal?.ch}
                 </span>
                 <div className="min-w-0">
                   <span className="text-[10px] font-mono text-indigo-400 uppercase font-bold tracking-wider">
                     NCERT कक्षा {selectedClass} • सम्पूर्ण अध्याय पाठ्यपुस्तक
                   </span>
                   <h3 className="font-extrabold text-base sm:text-lg text-white truncate">
-                    {openChapterModal.title}
+                    {openChapterModal?.title}
                   </h3>
                 </div>
               </div>
 
               <div className="flex items-center space-x-2 shrink-0">
                 <button
-                  onClick={() => speakText(`${openChapterModal.title}. ${openChapterModal.overview}`, 'hi-IN')}
+                  onClick={() => speakText(`${openChapterModal?.title || ''}. ${openChapterModal?.overview || ''}`, 'hi-IN')}
                   className="px-3 py-1.5 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 text-xs font-bold flex items-center gap-1 border border-indigo-500/40"
                   title="अध्याय वाचन सुनें"
                 >
@@ -687,13 +697,13 @@ export const NCERTFullStudySuite: React.FC<NCERTFullStudySuiteProps> = ({
               {/* Overview & Real Banner */}
               <div className="relative rounded-2xl overflow-hidden h-48 border border-slate-800 shadow">
                 <img 
-                  src={openChapterModal.bookCoverPic} 
-                  alt={openChapterModal.title}
+                  src={openChapterModal?.bookCoverPic} 
+                  alt={openChapterModal?.title || 'Chapter Cover'}
                   className="w-full h-full object-cover" 
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent p-4 flex flex-col justify-end">
-                  <h4 className="text-xl font-black text-white">{openChapterModal.title}</h4>
-                  <p className="text-xs text-amber-300 mt-1">{openChapterModal.subtitle}</p>
+                  <h4 className="text-xl font-black text-white">{openChapterModal?.title}</h4>
+                  <p className="text-xs text-amber-300 mt-1">{openChapterModal?.subtitle}</p>
                 </div>
               </div>
 
@@ -701,7 +711,7 @@ export const NCERTFullStudySuite: React.FC<NCERTFullStudySuiteProps> = ({
               <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
                 <strong className="text-sm font-bold text-amber-400 block">पाठ सारांश (Chapter Overview):</strong>
                 <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                  {openChapterModal.overview}
+                  {openChapterModal?.overview}
                 </p>
               </div>
 
@@ -1616,6 +1626,15 @@ export const NCERTFullStudySuite: React.FC<NCERTFullStudySuiteProps> = ({
             </div>
           )}
 
+        </div>
+      )}
+
+      {/* =========================================================================
+          SECTION 9: IOIS NURSERY ALPHABET SERIES (A TO Z WORKBOOK)
+          ========================================================================= */}
+      {activeTab === 'workbook' && (
+        <div className="bg-slate-100 rounded-3xl p-3 sm:p-6 text-slate-900 border border-slate-300 shadow-2xl animate-in fade-in duration-200">
+          <NurseryAlphabetWorkbook onClose={() => setActiveTab('chapters')} />
         </div>
       )}
 

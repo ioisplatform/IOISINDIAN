@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { secretPlanPasswords } from '../data/studyWorkData';
 import { MemberProfile } from '../types';
+import { verifyStudentPlanPassword, getActivePlanPassword } from '../services/planPasswordService';
 
 const ENCRYPTED_AUTH_STORAGE_PREFIX = 'iois_sec_vault_auth_v4_';
 const ATTEMPTS_STORAGE_PREFIX = 'iois_sec_attempts_v4_';
@@ -98,7 +99,7 @@ export function useEncryptedPlanAuth(
   const storageKey = `${ENCRYPTED_AUTH_STORAGE_PREFIX}${planId}`;
   const attemptsKey = `${ATTEMPTS_STORAGE_PREFIX}${planId}`;
   const planNumStr = planNumber < 10 ? `0${planNumber}` : `${planNumber}`;
-  const expectedFormatHint = `IOISINDIAPLAN${planNumStr}`;
+  const expectedFormatHint = '';
 
   // Check lockout status helper
   const checkLockoutStatus = useCallback((): boolean => {
@@ -258,22 +259,9 @@ export function useEncryptedPlanAuth(
       // Simulate slight cryptographic processing delay for smooth UX and timing-attack mitigation
       await new Promise((resolve) => setTimeout(resolve, 350));
 
-      const validPasswords = getAuthorizedPasswordsForPlan(planId, planNumber);
-      const inputHash = await computeCryptoHash(cleanInput, `${CRYPTO_SALT}${planId}`);
+      const isMatch = verifyStudentPlanPassword(planId, cleanInput);
 
-      let matchedPassword: string | null = null;
-      let matchedSignature: string | null = null;
-
-      for (const pwd of validPasswords) {
-        const expectedHash = await computeCryptoHash(pwd, `${CRYPTO_SALT}${planId}`);
-        if (expectedHash === inputHash) {
-          matchedPassword = pwd;
-          matchedSignature = expectedHash;
-          break;
-        }
-      }
-
-      if (matchedPassword && matchedSignature) {
+      if (isMatch) {
         // Success: Reset attempts
         localStorage.removeItem(attemptsKey);
         setAttemptsLeft(MAX_ATTEMPTS);
@@ -285,7 +273,7 @@ export function useEncryptedPlanAuth(
           planId,
           authTime: now,
           expiresAt: now + 24 * 60 * 60 * 1000,
-          signature: matchedSignature,
+          signature: await computeCryptoHash(cleanInput, `${CRYPTO_SALT}${planId}`),
           nonce: Math.random().toString(36).substring(2, 10)
         };
 
@@ -294,7 +282,7 @@ export function useEncryptedPlanAuth(
 
         setIsAuthorized(true);
         setAuthorizedAt(now);
-        setSuccessMessage('सत्यापन सफल! एनक्रिप्टेड सुरक्षा पास स्वीकृत। अध्ययन पोर्टल अनलॉक्ड है।');
+        setSuccessMessage('सत्यापन सफल! अधिकृत सुरक्षा पास स्वीकृत। अध्ययन पोर्टल अनलॉक्ड है।');
         setIsVerifying(false);
         return true;
       } else {
@@ -322,7 +310,7 @@ export function useEncryptedPlanAuth(
           const remaining = MAX_ATTEMPTS - currentCount;
           setAttemptsLeft(remaining);
           setError(
-            `गलत पासवर्ड! कृपया इस प्लान (Plan 0${planNumber}) के लिए अधिकृत पासवर्ड (जैसे: ${expectedFormatHint}) दर्ज करें। (शेष प्रयास: ${remaining})`
+            `गलत पासवर्ड! कृपया इस प्लान (Plan 0${planNumber}) का सही अधिकृत सुरक्षा पासवर्ड दर्ज करें या एडमिन से संपर्क करें। (शेष प्रयास: ${remaining})`
           );
         }
 

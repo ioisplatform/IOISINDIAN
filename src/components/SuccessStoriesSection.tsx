@@ -42,17 +42,19 @@ export const SuccessStoriesSection: React.FC<SuccessStoriesSectionProps> = ({ on
                     <span className="px-2.5 py-0.5 rounded text-[10px] font-black uppercase bg-slate-100 text-slate-800">
                       PLAN 0{plan.planNumber} • {plan.name}
                     </span>
-                    <span className="text-xs font-black font-mono text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
-                      {plan.successStory.earnings}
-                    </span>
+                    {plan.successStory?.earnings && (
+                      <span className="text-xs font-black font-mono text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                        {plan.successStory.earnings}
+                      </span>
+                    )}
                   </div>
 
                   <h3 className="text-base sm:text-lg font-black text-slate-900">
-                    {plan.successStory.title}
+                    {plan.successStory?.title}
                   </h3>
 
                   <p className="text-xs sm:text-sm text-slate-700 italic leading-relaxed">
-                    "{plan.successStory.story}"
+                    "{plan.successStory?.story}"
                   </p>
                 </div>
 
@@ -65,7 +67,7 @@ export const SuccessStoriesSection: React.FC<SuccessStoriesSectionProps> = ({ on
                     </div>
                     <div>
                       <span className="text-xs font-bold text-slate-900 block truncate">
-                        {plan.successStory.person}
+                        {plan.successStory?.person}
                       </span>
                       <span className="text-[10px] text-slate-500 block">
                         सत्यापित IOIS एक्टिव सदस्य

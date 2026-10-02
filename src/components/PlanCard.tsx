@@ -218,7 +218,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
                         {getDynamicIcon(item.icon)}
                       </div>
                       <div>
-                        <span className="font-bold text-slate-900 block">{item.title}</span>
+                        <span className="font-bold text-slate-900 block">{item?.title || ''}</span>
                         <p className="text-slate-600 mt-0.5 leading-relaxed">{item.description}</p>
                       </div>
                     </div>

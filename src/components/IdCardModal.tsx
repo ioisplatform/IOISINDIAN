@@ -12,6 +12,7 @@ import {
   UserCheck, 
   Crown,
   Check,
+  Copy,
   Eye,
   EyeOff,
   RotateCw
@@ -20,33 +21,46 @@ import {
 interface IdCardModalProps {
   isOpen: boolean;
   onClose: () => void;
-  member: MemberProfile;
+  currentUser?: MemberProfile | null;
+  member?: MemberProfile | null;
 }
 
 export const IdCardModal: React.FC<IdCardModalProps> = ({
   isOpen,
   onClose,
+  currentUser,
   member
 }) => {
   const [cardSide, setCardSide] = useState<'front' | 'back'>('front');
   const [orientation, setOrientation] = useState<'landscape' | 'portrait'>('landscape');
   const [maskDetails, setMaskDetails] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedId, setCopiedId] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  if (!isOpen) return null;
+  const activeUser = member || currentUser;
 
-  const currentPlan = ioisMasterPlans.find(p => p.id === member.planId) || ioisMasterPlans[6];
-  const isSupreme = currentPlan.isSupreme;
+  if (!isOpen || !activeUser) return null;
+
+  const currentPlan = ioisMasterPlans.find(p => p.id === activeUser.planId) || ioisMasterPlans[0];
+  const isSupreme = activeUser.planId === 'plan-07';
 
   const displayPhone = maskDetails 
-    ? (member.phone ? `${member.phone.slice(0, 4)}******${member.phone.slice(-2)}` : '9876******10')
-    : member.phone;
+    ? (activeUser.phone ? `${activeUser.phone.slice(0, 4)}******${activeUser.phone.slice(-2)}` : '9876******10')
+    : activeUser.phone;
+
+  const userIdentifier = activeUser.rollNumber || activeUser.memberId;
+
+  const handleCopyMemberId = () => {
+    navigator.clipboard.writeText(userIdentifier);
+    setCopiedId(true);
+    setTimeout(() => setCopiedId(false), 2000);
+  };
 
   const handleShare = () => {
-    const text = `मेरा IOIS आधिकारिक डिजिटल ID कार्ड: ${member.name} (${member.memberId}), एक्टिव प्लान: ${currentPlan.name}। IOIS 7 मास्टर प्लान्स से जुड़ें: https://ioisplatform.github.io/?ref=${member.memberId}`;
+    const text = `मेरा IOIS आधिकारिक डिजिटल ID कार्ड: ${activeUser.name} (User ID: ${userIdentifier}), एक्टिव प्लान: ${currentPlan.name}। IOIS पोर्टल: https://ioisplatform.github.io/student/`;
     if (navigator.share) {
-      navigator.share({ title: 'IOIS Digital ID Card', text: text });
+      navigator.share({ title: 'IOIS Student ID Card', text: text });
     } else {
       navigator.clipboard.writeText(text);
       setCopiedLink(true);
@@ -58,27 +72,198 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({
     window.print();
   };
 
-  const handleDownload = () => {
-    // Basic canvas capture fallback
-    alert(`IOIS ID कार्ड (${member.memberId}) डाउनलोड हो रहा है... प्रिंट करने के लिए "प्रिंट कार्ड" बटन का उपयोग करें।`);
+  const handlePremiumDownload = () => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      window.print();
+      return;
+    }
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>IOIS Premium Student ID Card - ${activeUser.name}</title>
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800;900&display=swap');
+            body {
+              font-family: 'Plus Jakarta Sans', sans-serif;
+              background: #f1f5f9;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              min-height: 100vh;
+              margin: 0;
+              padding: 20px;
+            }
+            .card {
+              width: 480px;
+              background: linear-gradient(135deg, #090d16 0%, #1e3a8a 50%, #0f172a 100%);
+              border-radius: 20px;
+              border: 3px solid #d4af37;
+              box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+              color: white;
+              overflow: hidden;
+              position: relative;
+            }
+            .ribbon {
+              height: 6px;
+              background: linear-gradient(90deg, #f97316 0%, #ffffff 50%, #10b981 100%);
+            }
+            .header {
+              padding: 16px 20px;
+              background: rgba(0,0,0,0.4);
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              border-bottom: 1px solid rgba(212,175,55,0.3);
+            }
+            .header-title {
+              font-size: 15px;
+              font-weight: 900;
+              letter-spacing: 0.5px;
+            }
+            .badge {
+              background: #d4af37;
+              color: #0f172a;
+              font-size: 10px;
+              font-weight: 900;
+              padding: 4px 8px;
+              border-radius: 6px;
+            }
+            .body {
+              padding: 20px;
+              display: flex;
+              gap: 16px;
+            }
+            .avatar {
+              width: 90px;
+              height: 110px;
+              background: #1e293b;
+              border: 2px solid #d4af37;
+              border-radius: 12px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 32px;
+            }
+            .info {
+              flex: 1;
+            }
+            .name {
+              font-size: 18px;
+              font-weight: 900;
+              color: white;
+              margin-bottom: 6px;
+            }
+            .id-pill {
+              display: inline-block;
+              background: #1e3a8a;
+              border: 1px solid #60a5fa;
+              color: #fef08a;
+              font-family: monospace;
+              font-weight: 900;
+              font-size: 12px;
+              padding: 3px 8px;
+              border-radius: 6px;
+              margin-bottom: 10px;
+            }
+            .details {
+              font-size: 11px;
+              color: #cbd5e1;
+              line-height: 1.6;
+            }
+            .details strong {
+              color: white;
+            }
+            .footer {
+              padding: 12px 20px;
+              background: rgba(0,0,0,0.5);
+              border-top: 1px solid rgba(255,255,255,0.1);
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              font-size: 10px;
+              color: #94a3b8;
+            }
+            .print-btn {
+              margin-top: 20px;
+              padding: 10px 24px;
+              background: #1e3a8a;
+              color: white;
+              border: none;
+              border-radius: 10px;
+              font-weight: 800;
+              cursor: pointer;
+            }
+            @media print {
+              .print-btn { display: none; }
+              body { background: white; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="card">
+            <div class="ribbon"></div>
+            <div class="header">
+              <div>
+                <div class="header-title">🇮🇳 IOIS PLATFORM</div>
+                <div style="font-size: 9px; color: #fef08a;">Indian Online Income Supporting System</div>
+              </div>
+              <div class="badge">100% VERIFIED ID</div>
+            </div>
+            <div class="body">
+              <div class="avatar">👨‍🎓</div>
+              <div class="info">
+                <div class="name">${activeUser.name}</div>
+                <div class="id-pill">USER ID: ${userIdentifier}</div>
+                <div class="details">
+                  <div>कक्षा / स्तर: <strong>${activeUser.grade || 'Primary'}</strong></div>
+                  <div>सक्रिय प्लान: <strong style="color: #4ade80;">${activeUser.planName || currentPlan.name} (₹${activeUser.amountPaid || currentPlan.price})</strong></div>
+                  <div>मोबाइल: <strong>${activeUser.phone}</strong></div>
+                  <div>शहर / राज्य: <strong>${activeUser.city}, ${activeUser.state}</strong></div>
+                </div>
+              </div>
+            </div>
+            <div class="footer">
+              <div>पंजीकरण तिथि: ${activeUser.joinedDate}</div>
+              <div style="color: #facc15; font-weight: bold;">OFFICIAL STUDENT DIGITAL ID</div>
+            </div>
+          </div>
+          <button class="print-btn" onclick="window.print()">📥 सेव / प्रिंट करें (Save as PDF)</button>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 animate-fadeIn font-sans">
       
-      <div className="bg-white w-full max-w-xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
+      <div className="bg-white w-full max-w-xl rounded-3xl shadow-2xl border-2 border-slate-300 overflow-hidden flex flex-col">
         
+        {/* Tricolor Ribbon on top */}
+        <div className="h-1.5 w-full bg-gradient-to-r from-orange-500 via-white via-blue-800 to-emerald-600" />
+
         {/* Modal Header */}
-        <div className="bg-slate-900 text-white p-4 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <ShieldCheck className="w-5 h-5 text-emerald-400" />
-            <h3 className="font-bold text-base">
-              आधिकारिक डिजिटल स्मार्ट ID कार्ड (IOIS Smart Pass)
-            </h3>
+        <div className="bg-gradient-to-r from-slate-950 via-[#0f172a] to-blue-950 text-white p-4 flex items-center justify-between">
+          <div className="flex items-center space-x-2.5">
+            <div className="w-9 h-9 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-black">
+              🪪
+            </div>
+            <div>
+              <h3 className="font-black text-base text-white">
+                आधिकारिक डिजिटल स्मार्ट छात्र ID कार्ड
+              </h3>
+              <p className="text-[11px] text-[#f3e5ab]">
+                सुरक्षित एवं गैर-संपादन योग्य रोल नंबर (Non-Editable Roll No)
+              </p>
+            </div>
           </div>
           <button 
             onClick={onClose}
-            className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+            className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-slate-300 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -91,7 +276,7 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({
             <button
               onClick={() => setCardSide('front')}
               className={`px-3 py-1 rounded-lg font-bold transition-colors ${
-                cardSide === 'front' ? 'bg-orange-600 text-white' : 'text-slate-600 hover:text-slate-900'
+                cardSide === 'front' ? 'bg-[#1e3a8a] text-white' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               आगे (Front)
@@ -99,7 +284,7 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({
             <button
               onClick={() => setCardSide('back')}
               className={`px-3 py-1 rounded-lg font-bold transition-colors ${
-                cardSide === 'back' ? 'bg-orange-600 text-white' : 'text-slate-600 hover:text-slate-900'
+                cardSide === 'back' ? 'bg-[#1e3a8a] text-white' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               पीछे (Back)
@@ -119,15 +304,15 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({
               onClick={() => setMaskDetails(!maskDetails)}
               className="px-2.5 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-700 font-bold flex items-center gap-1"
             >
-              {maskDetails ? <Eye className="w-3.5 h-3.5 text-blue-600" /> : <EyeOff className="w-3.5 h-3.5 text-slate-500" />}
-              <span>{maskDetails ? 'सार्वजनिक' : 'सुरक्षित'}</span>
+              {maskDetails ? <Eye className="w-3.5 h-3.5 text-blue-600" /> : <EyeOff className="w-3.5 h-3.5" />}
+              <span>{maskDetails ? 'अनमास्क' : 'मास्क फोन'}</span>
             </button>
           </div>
 
         </div>
 
-        {/* Card Canvas Container */}
-        <div className="p-6 bg-slate-200/70 flex items-center justify-center">
+        {/* ID Card Display Stage */}
+        <div className="p-6 bg-slate-200/80 flex items-center justify-center">
           
           <div 
             ref={cardRef}
@@ -140,7 +325,7 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({
               <div className={`rounded-2xl overflow-hidden shadow-2xl border-2 ${
                 isSupreme 
                   ? 'bg-gradient-to-br from-slate-950 via-slate-900 to-amber-950/80 border-amber-400' 
-                  : 'bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 border-orange-500/70'
+                  : 'bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950 border-[#d4af37]'
               } text-white`}>
                 
                 {/* Tricolor Accent Header */}
@@ -150,15 +335,15 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({
                   {/* Card Brand Header */}
                   <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                     <div className="flex items-center space-x-2.5">
-                      <div className="w-9 h-9 rounded-xl bg-orange-600 flex items-center justify-center font-black text-xs text-white shadow">
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 flex items-center justify-center font-black text-xs shadow">
                         IOIS
                       </div>
                       <div>
                         <span className="font-black text-sm text-white tracking-wide block">
-                          IOIS DIGITAL NETWORK
+                          IOIS DIGITAL CLASSROOM
                         </span>
                         <span className="text-[10px] text-amber-400 font-medium block">
-                          Indian Online Income Supporting System
+                          भारत का आधिकारिक छात्र शिक्षा कंसोल
                         </span>
                       </div>
                     </div>
@@ -172,16 +357,10 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({
                     
                     {/* Photo with frame */}
                     <div className="relative shrink-0">
-                      <div className={`w-20 h-20 rounded-2xl overflow-hidden border-2 ${
-                        isSupreme ? 'border-amber-400' : 'border-orange-500'
-                      } bg-slate-800 flex items-center justify-center shadow-lg`}>
-                        {member.avatarUrl ? (
-                          <img src={member.avatarUrl} alt={member.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-orange-600 to-amber-600 flex items-center justify-center font-black text-2xl text-white">
-                            {member.name.charAt(0)}
-                          </div>
-                        )}
+                      <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-amber-400 bg-slate-800 flex items-center justify-center shadow-lg">
+                        <div className="w-full h-full bg-gradient-to-br from-blue-700 to-indigo-900 flex items-center justify-center font-black text-2xl text-white">
+                          {activeUser.name.charAt(0)}
+                        </div>
                       </div>
                       <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 border-2 border-slate-950 flex items-center justify-center">
                         <Check className="w-3.5 h-3.5 text-slate-950 font-bold" />
@@ -191,36 +370,40 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({
                     {/* Meta info */}
                     <div className="space-y-1 flex-1 min-w-0">
                       <h4 className="font-black text-lg text-white truncate">
-                        {member.name}
+                        {activeUser.name}
                       </h4>
-                      <div className="inline-block px-2 py-0.5 rounded text-[10px] font-black font-mono bg-slate-900 border border-slate-700 text-orange-400">
-                        ID: {member.memberId}
+                      
+                      {/* Non-Editable Official Roll Number with Copy ID Button */}
+                      <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[11px] font-black font-mono bg-blue-900/60 border border-blue-400 text-[#f3e5ab]">
+                          <span>ID / ROLL NO:</span>
+                          <span>{userIdentifier}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleCopyMemberId}
+                          title="Copy Member ID to Clipboard"
+                          className="px-2.5 py-0.5 rounded text-[10px] font-black bg-amber-400 hover:bg-amber-300 text-slate-950 flex items-center gap-1 transition-colors shadow-xs"
+                        >
+                          {copiedId ? <Check className="w-3 h-3 text-slate-950" /> : <Copy className="w-3 h-3 text-slate-950" />}
+                          <span>{copiedId ? 'Copied!' : 'Copy ID'}</span>
+                        </button>
                       </div>
 
                       <div className="text-[11px] text-slate-300 space-y-0.5 pt-1">
-                        <div><span className="text-slate-400">पद:</span> {member.designation || 'Verified Member'}</div>
-                        <div><span className="text-slate-400">मोबाइल:</span> {displayPhone}</div>
-                        <div><span className="text-slate-400">स्थान:</span> {member.city}, {member.state}</div>
+                        <div>कक्षा: <strong className="text-white">{activeUser.grade || 'Primary'}</strong></div>
+                        <div>प्लान: <strong className="text-emerald-400">{activeUser.planName || currentPlan.name} (₹{activeUser.amountPaid || currentPlan.price})</strong></div>
+                        <div>मोबाइल: <span className="font-mono">{displayPhone}</span></div>
+                        <div>शहर / राज्य: <span>{activeUser.city}, {activeUser.state}</span></div>
                       </div>
                     </div>
 
                   </div>
 
-                  {/* Plan Banner & QR Code */}
-                  <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
-                    <div>
-                      <span className="text-[9px] text-slate-400 uppercase tracking-wider block">
-                        सक्रिय योजना स्तर:
-                      </span>
-                      <span className={`text-xs font-black ${isSupreme ? 'text-amber-300' : 'text-orange-400'}`}>
-                        PLAN 0{currentPlan.planNumber}: {currentPlan.name}
-                      </span>
-                    </div>
-
-                    {/* Real QR Code */}
-                    <div className="w-12 h-12 bg-white p-1 rounded-xl shrink-0 flex items-center justify-center shadow">
-                      <QrCode className="w-10 h-10 text-slate-950" />
-                    </div>
+                  {/* Card Bottom Bar */}
+                  <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-[10px] text-slate-400">
+                    <div>पंजीकरण तिथि: {activeUser.joinedDate}</div>
+                    <div className="text-amber-400 font-bold">100% NON-EDITABLE ID</div>
                   </div>
 
                 </div>
@@ -228,74 +411,69 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({
               </div>
             ) : (
               /* BACK OF ID CARD */
-              <div className="rounded-2xl overflow-hidden shadow-2xl border-2 border-slate-700 bg-slate-950 text-white p-5 space-y-4">
-                <div className="border-b border-slate-800 pb-2 text-center">
-                  <span className="text-xs font-bold text-orange-400 uppercase tracking-wider">
-                    IOIS आधिकारिक नियम एवं शर्तें (Terms)
-                  </span>
+              <div className="rounded-2xl overflow-hidden shadow-2xl border-2 border-slate-700 bg-slate-900 text-white p-5 space-y-4">
+                <div className="text-center space-y-1">
+                  <h5 className="font-black text-xs uppercase tracking-wider text-amber-400">
+                    अधिकृत छात्र नियम एवं दिशा-निर्देश
+                  </h5>
+                  <p className="text-[10px] text-slate-400">
+                    यह डिजिटल छात्र पहचान पत्र IOIS शैक्षिक मंच द्वारा जारी किया गया है।
+                  </p>
                 </div>
 
-                <div className="text-[11px] text-slate-300 space-y-2 leading-relaxed">
-                  <p>• यह डिजिटल स्मार्ट कार्ड IOIS नेटवर्क का आधिकारिक पहचान पत्र है।</p>
-                  <p>• कार्डधारक को उनके चयनित प्लान (PLAN 0{currentPlan.planNumber}) के अनुरूप 50% से 70% तक तत्काल रेफरल पेआउट पाने का अधिकार प्राप्त है।</p>
-                  <p>• कार्ड के पीछे स्थित QR कोड को स्कैन करके सीधे सदस्य के रेफरल लिंक से जुड़ा जा सकता है।</p>
+                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-[10px] text-slate-300 space-y-1.5 leading-relaxed">
+                  <div>1. यह पास केवल पंजीकृत विद्यार्थी के निजी अध्ययन के लिए मान्य है।</div>
+                  <div>2. जारी किया गया रोल नंबर अपरिवर्तनीय (Non-Editable) और स्थायी है।</div>
+                  <div>3. केवल उसी प्लान की किट अनलॉक होगी जिसका सत्यापन शुल्क भुगतान किया गया है।</div>
+                  <div>4. हेल्पलाइन एवं तकनीकी सहायता: <strong>+91 8877490845</strong></div>
                 </div>
 
-                <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
-                  <div>
-                    <span className="block font-bold text-white">हेल्पलाइन:</span>
-                    <span>+91 8877490845</span>
+                <div className="flex items-center justify-between pt-2 border-t border-slate-800 text-[10px]">
+                  <div className="font-mono text-slate-400">
+                    REF: {activeUser.paymentRef || 'VERIFIED-UPI'}
                   </div>
-                  <div className="text-right">
-                    <span className="block font-bold text-white">सत्यापन पोर्टल:</span>
-                    <span>ioisplatform.github.io</span>
+                  <div className="text-emerald-400 font-bold">
+                    STATUS: {activeUser.status}
                   </div>
-                </div>
-
-                <div className="text-center pt-2">
-                  <span className="text-[9px] text-slate-600 block">
-                    आधिकारिक 256-Bit एन्क्रिप्टेड डिजिटल पहचान • Made for Digital India
-                  </span>
                 </div>
               </div>
             )}
+
           </div>
 
         </div>
 
-        {/* Modal Footer Actions */}
-        <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
-          
-          <span className="text-xs font-bold text-slate-600">
-            User ID: <span className="font-mono text-orange-600">{member.memberId}</span>
-          </span>
+        {/* Modal Actions */}
+        <div className="p-4 bg-white border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div className="text-[11px] text-slate-500 font-medium">
+            रोल नंबर: <strong className="text-[#1e3a8a] font-mono">{activeUser.rollNumber || activeUser.memberId}</strong>
+          </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={handleShare}
+              className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold flex items-center gap-1.5 transition-colors"
+            >
+              <Share2 className="w-3.5 h-3.5" />
+              <span>{copiedLink ? 'लिंक कॉपी हुआ!' : 'शेयर करें'}</span>
+            </button>
+
             <button
               onClick={handlePrint}
-              className="px-3 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs flex items-center gap-1 transition-colors"
+              className="px-3.5 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold flex items-center gap-1.5 transition-colors"
             >
               <Printer className="w-3.5 h-3.5" />
               <span>प्रिंट कार्ड</span>
             </button>
 
             <button
-              onClick={handleShare}
-              className="px-3 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs flex items-center gap-1 transition-colors"
+              onClick={handlePremiumDownload}
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 via-[#d4af37] to-amber-600 hover:brightness-105 text-slate-950 font-black flex items-center gap-1.5 shadow-md transition-all tracking-wide"
             >
-              <Share2 className="w-3.5 h-3.5 text-blue-600" />
-              <span>{copiedLink ? 'कॉपी हुआ!' : 'शेयर करें'}</span>
-            </button>
-
-            <button
-              onClick={handleDownload}
-              className="px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs flex items-center gap-1 transition-colors shadow"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>डाउनलोड HD ID कार्ड</span>
+              <Download className="w-4 h-4" />
+              <span>डाउनलोड प्रीमियम ID कार्ड (HD)</span>
             </button>
           </div>
-
         </div>
 
       </div>

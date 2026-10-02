@@ -51,6 +51,19 @@ export interface IOISService {
   urlOrType: string;
 }
 
+export interface ActiveSession {
+  id: string;
+  deviceName: string;
+  deviceType: 'desktop' | 'mobile' | 'tablet';
+  browser: string;
+  os: string;
+  location: string;
+  ipAddress?: string;
+  loginTime: string;
+  lastActive: string;
+  isCurrent?: boolean;
+}
+
 export interface MemberProfile {
   name: string;
   phone: string;
@@ -58,16 +71,30 @@ export interface MemberProfile {
   city: string;
   state: string;
   memberId: string;
+  rollNumber: string; // Strictly non-editable, generated based on chosen plan
   planId: string;
+  planName?: string;
+  amountPaid: number;
+  paymentRef?: string; // UTR / Transaction reference number
+  grade?: string;
   joinedDate: string;
-  status: 'Pending' | 'Verified' | 'Active';
+  status: 'Pending' | 'Verified' | 'Active' | 'Rejected';
+  role?: 'student' | 'admin';
+  accessiblePlans: string[]; // List of plans kit user has authorization to access
   avatarUrl?: string;
+  sponsorName?: string;
   sponsorId?: string;
   payoutUpi?: string;
+  withdrawalUpi?: string; // UPI ID or Bank Account + IFSC for receiving payouts
+  address?: string; // Full address: House / Village / City / District / State / PIN
   utrNumber?: string;
   screenshotUrl?: string;
+  paymentScreenshotUrl?: string;
+  paymentAddressProofUrl?: string;
   password?: string;
   designation?: string;
+  activeSessions?: ActiveSession[];
+  sessionRevokedAt?: string;
 }
 
 export interface ChatMessage {

@@ -17,12 +17,14 @@ interface KidsLearningCornerProps {
   onOpenStudyPage: (planId: string) => void;
   onOpenAiTeacher: (initialPrompt?: string) => void;
   onOpenKidsAiZone: () => void;
+  onOpenNurseryWorkbook?: () => void;
 }
 
 export const KidsLearningCorner: React.FC<KidsLearningCornerProps> = ({
   onOpenStudyPage,
   onOpenAiTeacher,
-  onOpenKidsAiZone
+  onOpenKidsAiZone,
+  onOpenNurseryWorkbook
 }) => {
   const [playingAudioKey, setPlayingAudioKey] = useState<string | null>(null);
 
@@ -110,10 +112,16 @@ export const KidsLearningCorner: React.FC<KidsLearningCornerProps> = ({
             </div>
 
             <button
-              onClick={() => onOpenStudyPage('plan-01')}
-              className="mt-4 w-full py-2.5 px-3 bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow transition-colors"
+              onClick={() => {
+                if (onOpenNurseryWorkbook) {
+                  onOpenNurseryWorkbook();
+                } else {
+                  onOpenStudyPage('plan-01');
+                }
+              }}
+              className="mt-4 w-full py-2.5 px-3 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white font-black text-xs rounded-xl flex items-center justify-center gap-1.5 shadow transition-all hover:scale-[1.02]"
             >
-              <span>वर्णमाला ई-बुक खोलें</span>
+              <span>नर्सरी A-Z वर्कबुक खोलें (26 Pages)</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>

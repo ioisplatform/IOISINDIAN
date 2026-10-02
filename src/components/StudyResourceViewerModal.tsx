@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { StudyWorkContentItem, MemberProfile, PlanDetail } from '../types';
+import { canUserAccessPlanKit } from '../services/userService';
 import { NCERTFullStudySuite } from './NCERTFullStudySuite';
 import { Plan02YouthSuite } from './planStudySuites/Plan02YouthSuite';
 import { Plan03CareerSuite } from './planStudySuites/Plan03CareerSuite';
@@ -342,6 +343,8 @@ interface StudyResourceViewerModalProps {
   resource: StudyWorkContentItem | null;
   plan: PlanDetail;
   currentUser: MemberProfile | null;
+  onOpenLogin?: () => void;
+  onOpenRegistration?: (planId: string) => void;
 }
 
 export const StudyResourceViewerModal: React.FC<StudyResourceViewerModalProps> = ({
@@ -349,7 +352,9 @@ export const StudyResourceViewerModal: React.FC<StudyResourceViewerModalProps> =
   onClose,
   resource,
   plan,
-  currentUser
+  currentUser,
+  onOpenLogin,
+  onOpenRegistration
 }) => {
   const [selectedTab, setSelectedTab] = useState<'reader' | 'chapters' | 'download'>('reader');
   const [selectedClass, setSelectedClass] = useState<number>(1);
@@ -365,6 +370,117 @@ export const StudyResourceViewerModal: React.FC<StudyResourceViewerModalProps> =
                   plan.planNumber === 4 ? 100 :
                   plan.planNumber === 5 ? 200 :
                   plan.planNumber === 6 ? 500 : 999;
+
+  if (!isOpen) return null;
+
+  // STRICT ACCESS GATE:
+  // 1. Without login, visitor cannot access the kit.
+  // 2. User only gets access to the kit of the plan they registered & paid for!
+  const accessCheck = canUserAccessPlanKit(currentUser, plan.id);
+
+  if (!accessCheck.hasAccess) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-950/85 backdrop-blur-md animate-fadeIn overflow-y-auto font-sans">
+        <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border-2 border-slate-300 text-slate-800 overflow-hidden my-auto p-6 sm:p-8 text-center space-y-5">
+          <div className="w-16 h-16 rounded-3xl bg-amber-100 text-amber-800 flex items-center justify-center text-3xl mx-auto shadow-inner border border-amber-200">
+            🔒
+          </div>
+
+          {accessCheck.reason === 'not_logged_in' ? (
+            <>
+              <div className="space-y-2">
+                <span className="px-3 py-1 rounded-full bg-red-100 text-red-800 text-[11px] font-black uppercase tracking-wider inline-block">
+                  सुरक्षा प्रतिबंध: लॉगिन आवश्यक है
+                </span>
+                <h3 className="text-xl font-black text-slate-900">
+                  बिना लॉगिन या रजिस्ट्रेशन के किट उपलब्ध नहीं है!
+                </h3>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  यह अध्ययन किट (<strong>{plan.name}</strong>) केवल अधिकृत और सत्यापित पंजीकृत विद्यार्थियों के लिए सुरक्षित है। कृपया किट एक्सेस करने के लिए अपने खाते से लॉगिन करें या मात्र ₹{plan.price} का लाइफटाइम पास प्राप्त करें।
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+                <button
+                  onClick={() => {
+                    onClose();
+                    if (onOpenLogin) onOpenLogin();
+                  }}
+                  className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#1e3a8a] hover:bg-blue-900 text-white font-black text-xs shadow-md transition-colors"
+                >
+                  विद्यार्थी लॉगिन करें
+                </button>
+                <button
+                  onClick={() => {
+                    onClose();
+                    if (onOpenRegistration) onOpenRegistration(plan.id);
+                  }}
+                  className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-[#d4af37] to-amber-600 text-slate-950 font-black text-xs shadow-md hover:brightness-105"
+                >
+                  नया पास लें (@ ₹{plan.price})
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="space-y-2">
+                <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-[11px] font-black uppercase tracking-wider inline-block">
+                  प्लान मिसमैच: किट अनधिकृत
+                </span>
+                <h3 className="text-xl font-black text-slate-900">
+                  यह किट आपके सक्रिय प्लान में शामिल नहीं है!
+                </h3>
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-left space-y-1">
+                  <div><strong>आपका रोल नंबर:</strong> <span className="font-mono text-blue-800 font-bold">{currentUser?.rollNumber || currentUser?.memberId}</span></div>
+                  <div><strong>आपका सक्रिय प्लान:</strong> <span className="text-emerald-700 font-bold">{currentUser?.planName || currentUser?.planId} (₹{currentUser?.amountPaid})</span></div>
+                  <div><strong>अनुरोधित किट:</strong> <span className="text-amber-800 font-bold">{plan.name} (शुल्क: ₹{plan.price})</span></div>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  नियम के अनुसार, आपको केवल उसी किट का एक्सेस मिलता है जिसका आपने भुगतान किया है। इस किट को अनलॉक करने के लिए एडमिन से अपग्रेड का अनुरोध करें।
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+                <button
+                  onClick={onClose}
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs"
+                >
+                  वापस जाएं
+                </button>
+                <button
+                  onClick={() => {
+                    onClose();
+                    if (onOpenRegistration) onOpenRegistration(plan.id);
+                  }}
+                  className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-[#d4af37] to-amber-600 text-slate-950 font-black text-xs shadow-md hover:brightness-105"
+                >
+                  यह किट अनलॉक करें (₹{plan.price})
+                </button>
+              </div>
+            </>
+          )}
+
+          <div className="pt-2">
+            <button
+              onClick={onClose}
+              className="text-xs text-slate-400 hover:text-slate-600 underline font-medium"
+            >
+              डायलॉग बंद करें
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const activeResource = resource || {
+    id: `plan-0${plan?.planNumber || 1}-full-kit`,
+    title: `IOIS ${plan?.name || 'अध्ययन योजना'} - सम्पूर्ण अध्ययन किट 2026`,
+    category: 'डिजिटल अध्ययन सामग्री',
+    type: 'pdf' as const,
+    description: plan?.tagline || 'सचित्र ई-बुक्स, नोट्स व कार्य किट',
+    actionLabel: 'अध्ययन करें'
+  };
 
   // Single page printable text download
   const handleDownloadSinglePage = (page: BalVikasPrintablePage) => {
@@ -472,23 +588,21 @@ export const StudyResourceViewerModal: React.FC<StudyResourceViewerModalProps> =
     }
   };
 
-  if (!isOpen || !resource) return null;
-
   // Real comprehensive file download generator
   const handleDownloadFile = () => {
     let content = `========================================================================\n`;
     content += `🇮🇳 IOIS NATIONAL DIGITAL EDUCATION & INCOME NETWORK\n`;
     content += `आधिकारिक अध्ययन सामग्री एवं कार्य पैकेज (Official Study & Work Package)\n`;
     content += `योजना: PLAN 0${plan.planNumber} - ${plan.name} (शुल्क: ₹${planFee})\n`;
-    content += `संसाधन: ${resource.title}\n`;
-    content += `श्रेणी: ${resource.category} | साइज: ${resource.fileSize || '48.2 MB'}\n`;
-    content += `अधिकृत सदस्य नाम: ${currentUser ? currentUser.name : 'Vikas Kumar'}\n`;
-    content += `अधिकृत सदस्य ID: ${currentUser ? currentUser.memberId : 'IOIS10VK01'}\n`;
+    content += `संसाधन: ${activeResource?.title || 'IOIS अध्ययन किट'}\n`;
+    content += `श्रेणी: ${activeResource.category} | साइज: ${activeResource.fileSize || '48.2 MB'}\n`;
+    content += `अधिकृत सदस्य नाम: ${currentUser ? currentUser.name : 'विद्यार्थी सदस्य'}\n`;
+    content += `अधिकृत सदस्य ID: ${currentUser ? (currentUser.rollNumber || currentUser.memberId) : 'IOIS10VK01'}\n`;
     content += `सत्यापन तारीख: ${new Date().toLocaleDateString('hi-IN')}\n`;
     content += `आधिकारिक हेल्पलाइन: +91 8877490845 | IOIS सपोर्ट: ioisplatform@gmail.com\n`;
     content += `========================================================================\n\n`;
 
-    if (plan.planNumber === 1 || resource.id.startsWith('bv-')) {
+    if (plan.planNumber === 1 || activeResource.id.startsWith('bv-')) {
       content += `========================================================================\n`;
       content += `📘 कक्षा 1 से 5 NCERT सम्पूर्ण अध्ययन सामग्री (COMPLETE TEXTBOOK & GUIDE)\n`;
       content += `========================================================================\n\n`;
@@ -742,7 +856,7 @@ export const StudyResourceViewerModal: React.FC<StudyResourceViewerModalProps> =
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `IOIS_PLAN_0${plan.planNumber}_${resource.id}_Complete_Package.txt`;
+    link.download = `IOIS_PLAN_0${plan.planNumber}_${activeResource.id}_Complete_Package.txt`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -757,7 +871,7 @@ export const StudyResourceViewerModal: React.FC<StudyResourceViewerModalProps> =
   };
 
   const handleCopyNotes = () => {
-    const text = `${resource.title}\n${resource.description}\n\nयोजना: PLAN 0${plan.planNumber} (शुल्क: ₹${planFee}) • 70% पेआउट इंसेंटिव\nIOIS आधिकारिक पोर्टल: https://ioisplatform.github.io/`;
+    const text = `${activeResource?.title || 'IOIS अध्ययन किट'}\n${activeResource?.description || ''}\n\nयोजना: PLAN 0${plan.planNumber} (शुल्क: ₹${planFee}) • 70% पेआउट इंसेंटिव\nIOIS आधिकारिक पोर्टल: https://ioisplatform.github.io/`;
     navigator.clipboard.writeText(text);
     setCopiedText(true);
     setTimeout(() => setCopiedText(false), 2000);
@@ -784,7 +898,7 @@ export const StudyResourceViewerModal: React.FC<StudyResourceViewerModalProps> =
                 </span>
               </div>
               <h3 className="font-extrabold text-base sm:text-lg text-white truncate">
-                {resource.title}
+                {activeResource?.title || 'IOIS सम्पूर्ण अध्ययन किट'}
               </h3>
             </div>
           </div>
@@ -876,7 +990,7 @@ export const StudyResourceViewerModal: React.FC<StudyResourceViewerModalProps> =
             <div className="space-y-6">
               
               {/* DEDICATED FULL STUDY SUITES FOR ALL 7 PLANS */}
-              {resource.id === 'bv-01' || plan.planNumber === 1 ? (
+              {activeResource.id === 'bv-01' || plan.planNumber === 1 ? (
                 <NCERTFullStudySuite initialClass={selectedClass} />
               ) : plan.planNumber === 2 ? (
                 <Plan02YouthSuite />
@@ -960,7 +1074,7 @@ export const StudyResourceViewerModal: React.FC<StudyResourceViewerModalProps> =
                         {idx + 1}
                       </span>
                       <div className="min-w-0">
-                        <strong className="text-white block text-sm">{item.ch}: {item.title}</strong>
+                        <strong className="text-white block text-sm">{item?.ch}: {item?.title || ''}</strong>
                         <p className="text-slate-400 text-xs mt-0.5">{item.desc}</p>
                       </div>
                     </div>
@@ -996,7 +1110,7 @@ export const StudyResourceViewerModal: React.FC<StudyResourceViewerModalProps> =
               )}
 
               {/* SPECIFIC TO PLAN 01: BAL VIKAS MASTER KIT */}
-              {(plan.planNumber === 1 || resource.id.startsWith('bv-')) ? (
+              {(plan.planNumber === 1 || activeResource.id.startsWith('bv-')) ? (
                 <div className="space-y-8">
                   
                   {/* Master Kit Header Banner */}
@@ -1029,7 +1143,7 @@ export const StudyResourceViewerModal: React.FC<StudyResourceViewerModalProps> =
                           कुल पैकेज साइज
                         </div>
                         <div className="text-3xl font-black text-orange-400 font-mono">
-                          {resource.fileSize || '48.2 MB'}
+                          {activeResource.fileSize || '48.2 MB'}
                         </div>
                         <div className="text-[10px] text-emerald-400 font-bold">
                           ✓ 100% लाइफटाइम ऑफलाइन एक्सेस
@@ -1236,12 +1350,12 @@ export const StudyResourceViewerModal: React.FC<StudyResourceViewerModalProps> =
                       ऑफलाइन अध्ययन हेतु सम्पूर्ण पैकेज डाउनलोड करें
                     </h4>
                     <p className="text-xs text-slate-400 leading-relaxed">
-                      इस बटन पर क्लिक करते ही <strong>{resource.title}</strong> की सम्पूर्ण पाठ्य सामग्री, नोट्स और वर्कशीट्स आपके फोन या कंप्यूटर में तुरंत सेव हो जाएँगी।
+                      इस बटन पर क्लिक करते ही <strong>{activeResource?.title || 'IOIS किट'}</strong> की सम्पूर्ण पाठ्य सामग्री, नोट्स और वर्कशीट्स आपके फोन या कंप्यूटर में तुरंत सेव हो जाएँगी।
                     </p>
                   </div>
 
                   <div className="p-3 bg-slate-900 rounded-xl border border-slate-800 text-xs text-slate-300">
-                    <span>साइज: <strong>{resource.fileSize || '48.2 MB'}</strong> • मुद्रण योग्य (Printable) • <strong>₹{planFee} योजना में अधिकृत व शामिल</strong> (70% पेआउट इंसेंटिव)</span>
+                    <span>साइज: <strong>{activeResource.fileSize || '48.2 MB'}</strong> • मुद्रण योग्य (Printable) • <strong>₹{planFee} योजना में अधिकृत व शामिल</strong> (70% पेआउट इंसेंटिव)</span>
                   </div>
 
                   <button

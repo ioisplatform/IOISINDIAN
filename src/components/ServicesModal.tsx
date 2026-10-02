@@ -116,7 +116,7 @@ export const ServicesModal: React.FC<ServicesModalProps> = ({
             </div>
             <div>
               <h3 className="text-lg sm:text-xl font-bold">
-                IOIS सभी 17+ सेवाएं (डायलॉग बॉक्स मेन्यू)
+                IOIS सभी 17+ डिजिटल सेवाएं
               </h3>
               <p className="text-xs text-slate-300">
                 RTPS, 7 प्लांस, विद्यार्थी नोट्स, मौसम, टीवी, पंचांग, मंडी भाव व अन्य सभी डिजिटल सुविधाएं

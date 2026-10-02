@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { MemberProfile } from '../types';
 import { 
-  Sparkles, 
   Menu, 
   X, 
   CreditCard, 
@@ -12,7 +11,12 @@ import {
   Pencil,
   Tv,
   LogOut,
-  GraduationCap
+  GraduationCap,
+  FileCheck2,
+  Layers,
+  PhoneCall,
+  ShieldCheck,
+  LogIn
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -22,8 +26,13 @@ interface NavbarProps {
   onOpenLoginModal: () => void;
   onOpenDashboardModal: () => void;
   onOpenIdCardModal: () => void;
-  onOpenStudyPage: (planId: string) => void;
-  onScrollToSection: (sectionId: string) => void;
+  onOpenStudyModal: (planId: string) => void;
+  onOpenVideoModal: () => void;
+  onOpenTracingModal: () => void;
+  onOpenHomeworkModal: () => void;
+  onOpenPlansModal: () => void;
+  onOpenNurseryWorkbook?: () => void;
+  onOpenAdminModal?: () => void;
   onLogout: () => void;
 }
 
@@ -34,8 +43,13 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenLoginModal,
   onOpenDashboardModal,
   onOpenIdCardModal,
-  onOpenStudyPage,
-  onScrollToSection,
+  onOpenStudyModal,
+  onOpenVideoModal,
+  onOpenTracingModal,
+  onOpenHomeworkModal,
+  onOpenPlansModal,
+  onOpenNurseryWorkbook,
+  onOpenAdminModal,
   onLogout
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -46,48 +60,63 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   const handleShare = () => {
-    const text = "IOIS 7 अध्ययन योजनाएं: कक्षा 1 से 12 व करियर स्किल्स, वीडियो कक्षाएं, डिजिटल ट्रेसिंग पैड व नोट्स। पोर्टल: https://ioisplatform.github.io/";
+    const text = "IOIS डिजिटल शिक्षा: 7 अध्ययन योजनाएं, सचित्र NCERT नोट्स, वीडियो कक्षाएं, डिजिटल अक्षर स्लेट व AI शिक्षक। पोर्टल: https://ioisplatform.github.io/student/";
     if (navigator.share) {
-      navigator.share({ title: 'IOIS Student Hub', text: text, url: 'https://ioisplatform.github.io/' });
+      navigator.share({ title: 'IOIS Student Portal', text: text, url: 'https://ioisplatform.github.io/student/' });
     } else {
       navigator.clipboard.writeText(text);
-      alert('IOIS छात्र पोर्टल लिंक कॉपी हो गया!');
+      alert('IOIS छात्र सेवा पोर्टल लिंक कॉपी हो गया!');
     }
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
-      {/* Tricolor National Aesthetic Top Band */}
-      <div className="h-1.5 w-full bg-gradient-to-r from-orange-500 via-white via-blue-700 to-emerald-600" />
+    <header className="sticky top-0 z-40 bg-white/98 backdrop-blur-md border-b border-slate-200 shadow-xs text-slate-800">
       
-      {/* Top Announcement Bar */}
-      <div className="bg-slate-900 text-slate-200 text-xs py-1.5 px-4">
+      {/* 🇮🇳 IOIS INDIA National Postal Tricolor Band */}
+      <div className="h-1.5 w-full bg-gradient-to-r from-[#991b1b] via-[#ea580c] via-white via-[#1e3a8a] to-[#15803d]" />
+      
+      {/* Top Banking-Style Announcement & Service Support Bar */}
+      <div className="bg-[#991b1b] text-white text-xs py-1.5 px-4 border-b border-red-950">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-2 overflow-hidden">
-            <span className="bg-emerald-500 text-slate-950 font-black text-[10px] px-2 py-0.5 rounded tracking-wide uppercase shrink-0">
-              विद्यार्थी पोर्टल
+            <span className="bg-amber-400 text-slate-950 font-black text-[10px] px-2 py-0.5 rounded tracking-wide uppercase shrink-0 shadow-xs">
+              IOIS INDIA डिजिटल छात्र सेवा
             </span>
-            <span className="truncate text-slate-300">
-              🇮🇳 IOIS डिजिटल शिक्षा: 7 संपूर्ण अध्ययन योजनाएं • वीडियो कक्षाएं • डिजिटल अक्षर ट्रेसिंग पैड व गृहकार्य चेकिंग सक्रिय!
+            <span className="truncate text-red-100 font-bold text-[11px]">
+              🇮🇳 भारत का आधिकारिक डिजिटल शिक्षा मंच • कक्षा 1 से 12 एवं बाल विकास किट
             </span>
           </div>
           
           <div className="hidden md:flex items-center space-x-4 shrink-0 text-[11px]">
-            <button 
-              onClick={() => onOpenStudyPage(currentUser ? currentUser.planId : 'plan-01')}
-              className="text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1"
+            <a 
+              href="https://api.whatsapp.com/send?phone=918877490845" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-amber-200 hover:text-white font-bold flex items-center gap-1 transition-colors"
             >
-              <BookOpen className="w-3.5 h-3.5" />
-              <span>स्टडी हब खोलें</span>
-            </button>
-            <span>•</span>
+              <PhoneCall className="w-3 h-3 text-amber-300" />
+              <span>हेल्पलाइन: +91 8877490845</span>
+            </a>
+            <span className="text-red-300">•</span>
             <button 
               onClick={handleShare}
-              className="hover:text-white transition-colors flex items-center gap-1"
+              className="text-red-100 hover:text-white transition-colors flex items-center gap-1"
             >
-              <Share2 className="w-3 h-3 text-orange-400" />
-              <span>शेयर पोर्टल</span>
+              <Share2 className="w-3 h-3 text-amber-300" />
+              <span>शेयर</span>
             </button>
+            {onOpenAdminModal && (
+              <>
+                <span className="text-red-300">•</span>
+                <button
+                  onClick={onOpenAdminModal}
+                  className="hover:text-amber-200 text-amber-300 font-bold transition-colors flex items-center gap-1"
+                >
+                  <ShieldCheck className="w-3 h-3 text-amber-300" />
+                  <span>एडमिन</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -96,140 +125,184 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           
-          {/* Brand Logo & Tagline */}
+          {/* Brand Logo — IOIS INDIA Red & Navy Emblem */}
           <div 
-            onClick={() => onScrollToSection('top')}
+            onClick={() => onOpenPlansModal()}
             className="flex items-center space-x-3 cursor-pointer group shrink-0"
           >
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-orange-600 via-amber-600 to-orange-500 flex items-center justify-center font-black text-white text-base shadow-md group-hover:scale-105 transition-transform">
-              <GraduationCap className="w-6 h-6" />
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#991b1b] to-[#1e3a8a] flex items-center justify-center font-black text-white text-base shadow-md group-hover:scale-105 transition-transform border border-amber-300/40">
+              <GraduationCap className="w-5 h-5 text-amber-300" />
             </div>
             <div>
               <div className="flex items-center space-x-1.5">
-                <span className="font-extrabold text-lg sm:text-xl tracking-tight text-slate-900">
-                  IOIS <span className="text-orange-600">STUDENT</span>
+                <span className="font-black text-lg sm:text-xl tracking-tight text-slate-900">
+                  IOIS INDIA <span className="text-[#991b1b]">शिक्षा केंद्र</span>
                 </span>
-                <span className="hidden sm:inline-block bg-emerald-100 text-emerald-800 text-[10px] font-black px-1.5 py-0.5 rounded border border-emerald-300">
-                  CLASS 1-12
+                <span className="hidden sm:inline-block bg-red-100 text-[#991b1b] text-[10px] font-black px-1.5 py-0.5 rounded border border-red-200">
+                  सत्यापित
                 </span>
               </div>
-              <p className="text-[10px] sm:text-xs text-slate-500 font-medium leading-none">
-                Indian Online Institution System • डिजिटल शिक्षा मंच
+              <p className="text-[10px] text-slate-500 font-semibold leading-none">
+                National Digital Student Services
               </p>
             </div>
           </div>
 
-          {/* Desktop Navigation Links */}
+          {/* Desktop Navigation Links — IOIS INDIA Clear Services */}
           <nav className="hidden lg:flex items-center space-x-1 text-xs font-bold text-slate-700">
+            
+            {/* 1. Plans */}
             <button
-              onClick={() => onScrollToSection('top')}
-              className="px-3 py-2 rounded-xl hover:bg-slate-100 hover:text-orange-600 transition-colors"
+              onClick={onOpenPlansModal}
+              className="px-3 py-2 rounded-xl hover:bg-slate-100 text-slate-800 transition-colors flex items-center gap-1.5 font-bold"
             >
-              होम
+              <Layers className="w-3.5 h-3.5 text-[#991b1b]" />
+              <span>7 योजनाएं</span>
             </button>
 
+            {/* 2. Nursery A-Z Workbook */}
+            {onOpenNurseryWorkbook && (
+              <button
+                onClick={onOpenNurseryWorkbook}
+                className="px-3 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 transition-all flex items-center gap-1.5 font-black border border-amber-200 shadow-2xs"
+              >
+                <span className="text-sm">🔤</span>
+                <span>नर्सरी A-Z</span>
+                <span className="bg-[#991b1b] text-white text-[9px] px-1.5 py-0.2 rounded-full font-bold">26 P</span>
+              </button>
+            )}
+
+            {/* 3. Study Notes */}
             <button
-              onClick={() => onScrollToSection('plans')}
-              className="px-3 py-2 rounded-xl hover:bg-slate-100 hover:text-orange-600 transition-colors"
+              onClick={() => onOpenStudyModal(currentUser ? currentUser.planId : 'plan-01')}
+              className="px-3 py-2 rounded-xl hover:bg-blue-50 text-slate-800 hover:text-[#1e3a8a] transition-colors flex items-center gap-1.5 font-bold"
             >
-              7 अध्ययन योजनाएं
+              <BookOpen className="w-3.5 h-3.5 text-blue-700" />
+              <span>NCERT नोट्स</span>
             </button>
 
+            {/* 4. Video Lessons */}
             <button
-              onClick={() => onOpenStudyPage(currentUser ? currentUser.planId : 'plan-01')}
-              className="px-3 py-2 rounded-xl bg-orange-50 text-orange-700 hover:bg-orange-100 transition-colors flex items-center gap-1.5 font-black border border-orange-200"
+              onClick={onOpenVideoModal}
+              className="px-3 py-2 rounded-xl hover:bg-red-50 text-slate-800 hover:text-red-700 transition-colors flex items-center gap-1.5 font-bold"
             >
-              <BookOpen className="w-3.5 h-3.5 text-orange-600" />
-              <span>स्टडी नोट्स</span>
-            </button>
-
-            <button
-              onClick={() => onOpenStudyPage('plan-01')}
-              className="px-3 py-2 rounded-xl hover:bg-slate-100 hover:text-red-600 transition-colors flex items-center gap-1.5"
-            >
-              <Tv className="w-3.5 h-3.5 text-red-500" />
+              <Tv className="w-3.5 h-3.5 text-red-600" />
               <span>वीडियो कक्षाएं</span>
             </button>
 
+            {/* 5. Tracing Pad */}
             <button
-              onClick={() => onOpenStudyPage('plan-01')}
-              className="px-3 py-2 rounded-xl hover:bg-slate-100 hover:text-purple-600 transition-colors flex items-center gap-1.5"
+              onClick={onOpenTracingModal}
+              className="px-3 py-2 rounded-xl hover:bg-purple-50 text-slate-800 hover:text-purple-700 transition-colors flex items-center gap-1.5 font-bold"
             >
               <Pencil className="w-3.5 h-3.5 text-purple-600" />
-              <span>ट्रेसिंग पैड</span>
+              <span>डिजिटल स्लेट</span>
             </button>
 
+            {/* 6. Daily Homework */}
+            <button
+              onClick={onOpenHomeworkModal}
+              className="px-3 py-2 rounded-xl hover:bg-emerald-50 text-slate-800 hover:text-emerald-700 transition-colors flex items-center gap-1.5 font-bold"
+            >
+              <FileCheck2 className="w-3.5 h-3.5 text-emerald-600" />
+              <span>दैनिक गृहकार्य</span>
+            </button>
+
+            {/* 7. Student ID Card */}
             <button
               onClick={onOpenIdCardModal}
-              className="px-3 py-2 rounded-xl hover:bg-slate-100 hover:text-blue-600 transition-colors flex items-center gap-1.5"
+              className="px-3 py-2 rounded-xl hover:bg-slate-100 text-slate-800 transition-colors flex items-center gap-1.5 font-bold"
             >
-              <CreditCard className="w-3.5 h-3.5 text-blue-600" />
-              <span>छात्र ID कार्ड</span>
+              <CreditCard className="w-3.5 h-3.5 text-slate-600" />
+              <span>छात्र ID</span>
             </button>
           </nav>
 
-          {/* Right Action Buttons */}
+          {/* Right Action Buttons — ZERO DUPLICATE CLAIM BUTTONS */}
           <div className="hidden sm:flex items-center space-x-2">
             
             {/* AI Tutor Assistant */}
             <button
               onClick={() => onOpenAiModal('छात्र के रूप में पढ़ाई की योजना बताएं')}
-              className="px-3 py-2 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 text-xs font-bold flex items-center space-x-1.5 transition-colors"
+              className="px-3 py-2 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-200 text-xs font-bold flex items-center space-x-1.5 transition-colors"
             >
-              <Bot className="w-4 h-4 text-purple-600" />
+              <Bot className="w-4 h-4 text-purple-700" />
               <span>AI ट्यूटर</span>
             </button>
 
-            {/* Member Session / Auth buttons */}
+            {/* Auth / Dashboard Controls — Registration & Login */}
             {currentUser ? (
               <div className="flex items-center space-x-2">
                 <button
                   onClick={onOpenDashboardModal}
-                  className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center space-x-1.5 shadow transition-all"
+                  className="px-4 py-2 rounded-xl bg-[#991b1b] text-white hover:bg-red-800 text-xs font-black flex items-center space-x-1.5 shadow-sm transition-all border border-amber-300"
                 >
-                  <UserCheck className="w-4 h-4 text-emerald-400" />
-                  <span className="max-w-[120px] truncate">{currentUser.name}</span>
+                  <UserCheck className="w-4 h-4 text-amber-300" />
+                  <span>छात्र डैशबोर्ड</span>
                 </button>
+
                 <button
                   onClick={onLogout}
                   title="लॉगआउट"
-                  className="p-2 rounded-xl bg-slate-100 hover:bg-red-50 text-slate-500 hover:text-red-600 transition-colors"
+                  className="p-2 rounded-xl bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-red-600 transition-colors border border-slate-200"
                 >
                   <LogOut className="w-4 h-4" />
                 </button>
               </div>
             ) : (
-              <div className="flex items-center space-x-1.5">
-                <button
-                  onClick={onOpenLoginModal}
-                  className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors"
-                >
-                  छात्र लॉगिन
-                </button>
+              <div className="flex items-center space-x-2">
                 <button
                   onClick={() => onOpenRegistrationModal('plan-01')}
-                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white text-xs font-black shadow-md shadow-orange-600/20 transition-all hover:scale-105"
+                  className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:brightness-110 text-slate-950 text-xs font-black shadow-xs flex items-center space-x-1.5 transition-all border border-amber-300"
                 >
-                  विद्यार्थी पंजीकरण
+                  <UserCheck className="w-3.5 h-3.5 text-slate-950" />
+                  <span>विद्यार्थी पंजीकरण</span>
+                </button>
+
+                <button
+                  onClick={onOpenLoginModal}
+                  className="px-3.5 py-2 rounded-xl bg-[#1e3a8a] hover:bg-blue-900 text-white text-xs font-black shadow-xs flex items-center space-x-1.5 transition-all"
+                >
+                  <LogIn className="w-3.5 h-3.5 text-amber-300" />
+                  <span>विद्यार्थी लॉगिन</span>
                 </button>
               </div>
             )}
-
           </div>
 
           {/* Mobile Menu Toggle Button */}
-          <div className="flex items-center space-x-2 lg:hidden">
-            <button
-              onClick={() => onOpenStudyPage(currentUser ? currentUser.planId : 'plan-01')}
-              className="p-2 rounded-xl bg-orange-100 text-orange-700"
-              title="स्टडी हब"
-            >
-              <BookOpen className="w-4 h-4" />
-            </button>
+          <div className="flex lg:hidden items-center space-x-2">
+            {!currentUser ? (
+              <>
+                <button
+                  onClick={() => onOpenRegistrationModal('plan-01')}
+                  className="px-2.5 py-1.5 rounded-xl bg-amber-400 text-slate-950 text-xs font-black shadow-xs flex items-center gap-1 border border-amber-300"
+                >
+                  <UserCheck className="w-3 h-3 text-slate-950" />
+                  <span>पंजीकरण</span>
+                </button>
+                <button
+                  onClick={onOpenLoginModal}
+                  className="px-2.5 py-1.5 rounded-xl bg-[#1e3a8a] text-white text-xs font-bold shadow-xs flex items-center gap-1"
+                >
+                  <LogIn className="w-3 h-3 text-amber-300" />
+                  <span>लॉगिन</span>
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={onOpenDashboardModal}
+                className="px-3 py-1.5 rounded-xl bg-[#991b1b] text-white text-xs font-bold shadow-xs flex items-center gap-1"
+              >
+                <UserCheck className="w-3 h-3 text-amber-300" />
+                <span>डैशबोर्ड</span>
+              </button>
+            )}
 
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-xl text-slate-700 hover:bg-slate-100 focus:outline-none"
+              className="p-2 rounded-xl bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200 focus:outline-none"
+              aria-label="Toggle Menu"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -238,85 +311,123 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </div>
 
-      {/* Mobile Menu Dropdown */}
+      {/* Mobile IOIS INDIA Services Drawer */}
       {mobileMenuOpen && (
-        <div className="lg:hidden bg-white border-b border-slate-200 px-4 pt-3 pb-6 space-y-3 animate-in slide-in-from-top-4 duration-200 shadow-xl">
-          <div className="space-y-1">
+        <div className="lg:hidden bg-white border-t border-slate-200 px-4 pt-3 pb-6 space-y-3 animate-in fade-in duration-150">
+          
+          <div className="p-3 rounded-2xl bg-gradient-to-r from-red-50 to-amber-50 border border-red-200 flex items-center justify-between">
+            <div>
+              <span className="text-xs font-black text-[#991b1b] block">
+                IOIS INDIA विद्यार्थी सेवा केंद्र
+              </span>
+              <span className="text-[11px] text-slate-600">
+                कक्षा 1 से 12 एवं 7 मास्टर योजनाएं
+              </span>
+            </div>
+            <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-[#991b1b] text-white">
+              सत्यापित
+            </span>
+          </div>
+
+          {/* Mobile Quick Service Grid (IOIS INDIA Tiles) */}
+          <div className="grid grid-cols-2 gap-2 pt-1 font-bold text-xs">
+            {onOpenNurseryWorkbook && (
+              <button
+                onClick={() => handleNavClick(onOpenNurseryWorkbook)}
+                className="col-span-2 p-2.5 rounded-xl bg-amber-50 text-amber-900 text-left border border-amber-200 flex items-center justify-between shadow-2xs"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-base">🔤</span>
+                  <span className="font-black">नर्सरी A-Z वर्कबुक (26 Pages)</span>
+                </div>
+                <span className="bg-[#991b1b] text-white text-[9px] px-1.5 py-0.5 rounded-full font-bold">A4 Print</span>
+              </button>
+            )}
             <button
-              onClick={() => handleNavClick(() => onScrollToSection('top'))}
-              className="w-full text-left px-3 py-2 rounded-xl font-bold text-slate-700 hover:bg-slate-100"
+              onClick={() => handleNavClick(onOpenPlansModal)}
+              className="p-2.5 rounded-xl bg-slate-50 text-slate-800 text-left border border-slate-200 flex items-center gap-2"
             >
-              🏠 होम
+              <Layers className="w-4 h-4 text-[#991b1b]" />
+              <span>7 अध्ययन योजनाएं</span>
             </button>
             <button
-              onClick={() => handleNavClick(() => onScrollToSection('plans'))}
-              className="w-full text-left px-3 py-2 rounded-xl font-bold text-slate-700 hover:bg-slate-100"
+              onClick={() => handleNavClick(() => onOpenStudyModal(currentUser ? currentUser.planId : 'plan-01'))}
+              className="p-2.5 rounded-xl bg-slate-50 text-slate-800 text-left border border-slate-200 flex items-center gap-2"
             >
-              📚 7 अध्ययन योजनाएं (Class 1-12)
+              <BookOpen className="w-4 h-4 text-blue-700" />
+              <span>NCERT नोट्स</span>
             </button>
             <button
-              onClick={() => handleNavClick(() => onOpenStudyPage(currentUser ? currentUser.planId : 'plan-01'))}
-              className="w-full text-left px-3 py-2 rounded-xl font-bold text-orange-700 bg-orange-50 flex items-center gap-2"
-            >
-              <BookOpen className="w-4 h-4 text-orange-600" />
-              <span>📖 स्टडी नोट्स व पाठ्यक्रम</span>
-            </button>
-            <button
-              onClick={() => handleNavClick(() => onOpenStudyPage('plan-01'))}
-              className="w-full text-left px-3 py-2 rounded-xl font-bold text-red-700 bg-red-50 flex items-center gap-2"
+              onClick={() => handleNavClick(onOpenVideoModal)}
+              className="p-2.5 rounded-xl bg-slate-50 text-slate-800 text-left border border-slate-200 flex items-center gap-2"
             >
               <Tv className="w-4 h-4 text-red-600" />
-              <span>🎥 वीडियो कक्षाएं (Flow Video)</span>
+              <span>वीडियो कक्षाएं</span>
             </button>
             <button
-              onClick={() => handleNavClick(() => onOpenStudyPage('plan-01'))}
-              className="w-full text-left px-3 py-2 rounded-xl font-bold text-purple-700 bg-purple-50 flex items-center gap-2"
+              onClick={() => handleNavClick(onOpenTracingModal)}
+              className="p-2.5 rounded-xl bg-slate-50 text-slate-800 text-left border border-slate-200 flex items-center gap-2"
             >
               <Pencil className="w-4 h-4 text-purple-600" />
-              <span>🎨 अक्षर व चित्र ट्रेसिंग पैड</span>
+              <span>डिजिटल स्लेट</span>
+            </button>
+            <button
+              onClick={() => handleNavClick(onOpenHomeworkModal)}
+              className="p-2.5 rounded-xl bg-slate-50 text-slate-800 text-left border border-slate-200 flex items-center gap-2"
+            >
+              <FileCheck2 className="w-4 h-4 text-emerald-600" />
+              <span>दैनिक गृहकार्य</span>
             </button>
             <button
               onClick={() => handleNavClick(onOpenIdCardModal)}
-              className="w-full text-left px-3 py-2 rounded-xl font-bold text-slate-700 hover:bg-slate-100 flex items-center gap-2"
+              className="p-2.5 rounded-xl bg-slate-50 text-slate-800 text-left border border-slate-200 flex items-center gap-2"
             >
-              <CreditCard className="w-4 h-4 text-blue-600" />
-              <span>🪪 डिजिटल छात्र ID कार्ड</span>
+              <CreditCard className="w-4 h-4 text-slate-700" />
+              <span>छात्र ID कार्ड</span>
+            </button>
+            <button
+              onClick={() => handleNavClick(() => onOpenAiModal())}
+              className="col-span-2 p-2.5 rounded-xl bg-purple-50 text-purple-900 text-left border border-purple-200 flex items-center gap-2"
+            >
+              <Bot className="w-4 h-4 text-purple-700" />
+              <span>24x7 AI ट्यूटर से पूछें</span>
             </button>
           </div>
 
-          <div className="pt-3 border-t border-slate-100 flex flex-col gap-2">
+          <div className="pt-2 border-t border-slate-200 flex flex-col gap-2">
             {currentUser ? (
               <>
                 <button
                   onClick={() => handleNavClick(onOpenDashboardModal)}
-                  className="w-full py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold text-center"
+                  className="w-full py-2.5 bg-[#991b1b] text-white rounded-xl font-black text-center shadow-xs"
                 >
-                  छात्र डैशबोर्ड ({currentUser.name})
+                  छात्र डैशबोर्ड खोलें
                 </button>
                 <button
                   onClick={() => handleNavClick(onLogout)}
-                  className="w-full py-2 bg-red-50 text-red-600 rounded-xl text-xs font-bold text-center"
+                  className="w-full py-2 bg-red-50 text-red-700 rounded-xl font-bold text-center border border-red-200 text-xs"
                 >
                   लॉगआउट
                 </button>
               </>
             ) : (
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => handleNavClick(onOpenLoginModal)}
-                  className="py-2.5 bg-slate-100 text-slate-800 rounded-xl text-xs font-bold text-center"
-                >
-                  छात्र लॉगिन
-                </button>
+              <>
                 <button
                   onClick={() => handleNavClick(() => onOpenRegistrationModal('plan-01'))}
-                  className="py-2.5 bg-orange-600 text-white rounded-xl text-xs font-bold text-center shadow"
+                  className="w-full py-2.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 text-slate-950 font-black rounded-xl text-center shadow-xs border border-amber-300"
                 >
-                  नया पंजीकरण
+                  नया विद्यार्थी पंजीकरण करें (Register)
                 </button>
-              </div>
+                <button
+                  onClick={() => handleNavClick(onOpenLoginModal)}
+                  className="w-full py-2.5 bg-[#1e3a8a] text-white rounded-xl font-bold text-center shadow-xs"
+                >
+                  विद्यार्थी लॉगिन करें (Student Login)
+                </button>
+              </>
             )}
           </div>
+
         </div>
       )}
 

@@ -7,13 +7,19 @@ import { KidsAiTeacherZone } from './components/KidsAiTeacherZone';
 import { MembershipPlansSection } from './components/MembershipPlansSection';
 import { StudentLeaderboardWidget } from './components/StudentLeaderboardWidget';
 import { StudentMainDashboardView } from './components/StudentMainDashboardView';
-import { PlanComparisonMatrix } from './components/PlanComparisonMatrix';
+import { PlansDialogModal } from './components/PlansDialogModal';
+import { VideoModalDialog } from './components/VideoModalDialog';
+import { TracingModalDialog } from './components/TracingModalDialog';
+import { HomeworkModalDialog } from './components/HomeworkModalDialog';
+import { StudyResourceViewerModal } from './components/StudyResourceViewerModal';
 import { AiAssistantModal } from './components/AiAssistantModal';
 import { RegistrationModal } from './components/RegistrationModal';
 import { LoginModal } from './components/LoginModal';
 import { UserDashboardModal } from './components/UserDashboardModal';
 import { IdCardModal } from './components/IdCardModal';
+import { AdminPanelModal } from './components/AdminPanelModal';
 import { StudentPlanHubPage } from './components/StudentPlanHubPage';
+import { NurseryAlphabetWorkbook } from './components/NurseryAlphabetWorkbook';
 import { Footer } from './components/Footer';
 import { ioisMasterPlans } from './data/ioisPlansData';
 import { PlanDetail, MemberProfile } from './types';
@@ -23,15 +29,15 @@ import {
 } from './services/userService';
 
 export default function App() {
-  // User session state - genuine student session
+  // User session state
   const [currentUser, setCurrentUser] = useState<MemberProfile | null>(() => {
     return getCurrentSessionUser() || null;
   });
 
-  // Dedicated Study Page state (if non-null, shows the full study & learning hub for that plan)
+  // Dedicated Study Page state
   const [activeStudyPlanId, setActiveStudyPlanId] = useState<string | null>(null);
 
-  // Modals state
+  // Dedicated Dialog Boxes (Modals) state
   const [aiModalOpen, setAiModalOpen] = useState(false);
   const [aiInitialPrompt, setAiInitialPrompt] = useState<string | undefined>(undefined);
   const [registrationModalOpen, setRegistrationModalOpen] = useState(false);
@@ -40,6 +46,16 @@ export default function App() {
   const [dashboardModalOpen, setDashboardModalOpen] = useState(false);
   const [idCardModalOpen, setIdCardModalOpen] = useState(false);
   const [kidsAiZoneOpen, setKidsAiZoneOpen] = useState(false);
+  const [plansModalOpen, setPlansModalOpen] = useState(false);
+  const [videoModalOpen, setVideoModalOpen] = useState(false);
+  const [tracingModalOpen, setTracingModalOpen] = useState(false);
+  const [homeworkModalOpen, setHomeworkModalOpen] = useState(false);
+  const [studyModalOpen, setStudyModalOpen] = useState(false);
+  const [nurseryWorkbookOpen, setNurseryWorkbookOpen] = useState(false);
+  const [adminModalOpen, setAdminModalOpen] = useState(false);
+  const [selectedStudyPlanId, setSelectedStudyPlanId] = useState<string>('plan-01');
+
+  // Single Page View: Dashboard View vs Landing View
   const [isDashboardView, setIsDashboardView] = useState<boolean>(() => !!getCurrentSessionUser());
 
   // Auto-sync current user session
@@ -80,6 +96,12 @@ export default function App() {
     setDashboardModalOpen(false);
   };
 
+  // Open Study Dialog
+  const handleOpenStudyModal = (planId: string) => {
+    setSelectedStudyPlanId(planId);
+    setStudyModalOpen(true);
+  };
+
   const handleOpenStudyPage = (planId: string) => {
     setActiveStudyPlanId(planId);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -101,22 +123,25 @@ export default function App() {
     }, 50);
   };
 
-  const activePlanObj = activeStudyPlanId 
-    ? (ioisMasterPlans.find(p => p.id === activeStudyPlanId) || ioisMasterPlans[0])
-    : null;
-
   const handleOpenIdCardModal = () => {
-    if (!currentUser) {
-      setLoginModalOpen(true);
-    } else {
+    if (currentUser) {
       setIdCardModalOpen(true);
+    } else {
+      setLoginModalOpen(true);
     }
   };
 
+  // Find active plan object
+  const activePlanObj: PlanDetail | undefined = activeStudyPlanId 
+    ? ioisMasterPlans.find(p => p.id === activeStudyPlanId)
+    : undefined;
+
+  const currentStudyPlanObj: PlanDetail = ioisMasterPlans.find(p => p.id === selectedStudyPlanId) || ioisMasterPlans[0];
+
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 selection:bg-orange-500 selection:text-white font-sans antialiased">
+    <div className="min-h-screen flex flex-col bg-[#f8fafc] text-slate-900 selection:bg-amber-400 selection:text-slate-950 font-sans antialiased">
       
-      {/* 1. Global Student Navbar (shown on landing page) */}
+      {/* 1. Global Student Navbar (Professional Educational Blue & White) */}
       {!isDashboardView && (
         <Navbar
           currentUser={currentUser}
@@ -131,8 +156,13 @@ export default function App() {
           }}
           onOpenDashboardModal={() => setIsDashboardView(true)}
           onOpenIdCardModal={handleOpenIdCardModal}
-          onOpenStudyPage={handleOpenStudyPage}
-          onScrollToSection={handleScrollToSection}
+          onOpenStudyModal={handleOpenStudyModal}
+          onOpenVideoModal={() => setVideoModalOpen(true)}
+          onOpenTracingModal={() => setTracingModalOpen(true)}
+          onOpenHomeworkModal={() => setHomeworkModalOpen(true)}
+          onOpenPlansModal={() => setPlansModalOpen(true)}
+          onOpenNurseryWorkbook={() => setNurseryWorkbookOpen(true)}
+          onOpenAdminModal={() => setAdminModalOpen(true)}
           onLogout={handleLogout}
         />
       )}
@@ -140,7 +170,7 @@ export default function App() {
       {/* CONDITIONAL VIEWS:
           1. Dedicated Full-screen Plan Study Hub (activePlanObj)
           2. Logged-in Student Main Dashboard View (isDashboardView && currentUser)
-          3. Main Landing Homepage (5 Responsive Sections)
+          3. Main Landing Homepage (Every button opens a Dialog Box)
       */}
       {activePlanObj ? (
         <StudentPlanHubPage
@@ -158,17 +188,26 @@ export default function App() {
         <StudentMainDashboardView
           currentUser={currentUser}
           onLogout={handleLogout}
-          onOpenStudyPage={handleOpenStudyPage}
+          onOpenStudyModal={handleOpenStudyModal}
           onOpenIdCard={handleOpenIdCardModal}
           onViewHomepage={() => setIsDashboardView(false)}
+          onProfileUpdated={(updated) => setCurrentUser(updated)}
         />
       ) : (
-        /* MAIN LANDING: 5 PERFECT HOME SECTIONS */
+        /* MAIN LANDING: Professional Trust & Educational Blue Theme */
         <main className="flex-1">
-          {/* SECTION 1: HEADER & HERO SECTION */}
+          {/* SECTION 1: HEADER & HERO SECTION (IOIS INDIA Platform Style) */}
           <HeroSection
-            onOpenStudyPage={handleOpenStudyPage}
-            onOpenAiAdvisor={() => handleOpenAi('कक्षा और विषय के अनुसार मुझे अध्ययन की रूपरेखा समझाएं')}
+            currentUser={currentUser}
+            onOpenStudyModal={handleOpenStudyModal}
+            onOpenVideoModal={() => setVideoModalOpen(true)}
+            onOpenTracingModal={() => setTracingModalOpen(true)}
+            onOpenHomeworkModal={() => setHomeworkModalOpen(true)}
+            onOpenPlansModal={() => setPlansModalOpen(true)}
+            onOpenAiTeacherModal={() => setKidsAiZoneOpen(true)}
+            onClaimPass={() => handleOpenRegistration('plan-01')}
+            onOpenNurseryWorkbook={() => setNurseryWorkbookOpen(true)}
+            onOpenIdCardModal={handleOpenIdCardModal}
             onOpenLoginModal={() => {
               if (currentUser) {
                 setIsDashboardView(true);
@@ -176,65 +215,107 @@ export default function App() {
                 setLoginModalOpen(true);
               }
             }}
-            onScrollToSection={handleScrollToSection}
+            onOpenResumeBuilder={() => setActiveStudyPlanId('plan-02')}
+            onOpenRegistration={(pId) => handleOpenRegistration(pId || 'plan-01')}
           />
 
           {/* SECTION 2: SMART STUDENT DASHBOARD / CLASS SELECTION GRID */}
           <ClassSelectionGrid
-            onOpenStudyPage={handleOpenStudyPage}
+            onOpenStudyPage={(pId) => handleOpenStudyModal(pId)}
             onOpenAiTeacher={(prompt) => handleOpenAi(prompt)}
-            onScrollToPlans={() => handleScrollToSection('plans')}
+            onScrollToPlans={() => setPlansModalOpen(true)}
           />
 
           {/* SECTION 3: KIDS SPECIAL E-LEARNING & AI TEACHER CORNER */}
           <KidsLearningCorner
-            onOpenStudyPage={handleOpenStudyPage}
+            onOpenStudyPage={(pId) => handleOpenStudyModal(pId)}
             onOpenAiTeacher={(prompt) => handleOpenAi(prompt)}
             onOpenKidsAiZone={() => setKidsAiZoneOpen(true)}
+            onOpenNurseryWorkbook={() => setNurseryWorkbookOpen(true)}
           />
 
           {/* SECTION 4: MEMBERSHIP PLANS & PACKAGES SECTION */}
           <MembershipPlansSection
-            onJoinPlan={(planId) => handleOpenRegistration(planId)}
-            onOpenStudyPage={handleOpenStudyPage}
-            onOpenAiAdvisor={() => handleOpenAi('मुझे मेरे बजट और कक्षा के अनुसार सही प्लान बताएं')}
+            currentUser={currentUser}
+            onSelectPlan={(plan) => handleOpenRegistration(plan.id)}
+            onOpenStudyPage={(pId) => handleOpenStudyModal(pId)}
           />
 
-          {/* INSPIRING STUDENT LEADERBOARD & 1-CLICK VIRAL SHARE */}
+          {/* SECTION 4.1: STUDENT LEADERBOARD & REPUTATION */}
           <StudentLeaderboardWidget
-            onJoinPlan={(planId) => handleOpenRegistration(planId)}
-          />
-
-          {/* BONUS CURRICULUM COMPARISON TABLE */}
-          <PlanComparisonMatrix
-            onJoinPlan={(plan) => handleOpenRegistration(plan.id)}
-            onAskAi={(prompt) => handleOpenAi(prompt)}
-            onOpenStudyPage={(pId) => handleOpenStudyPage(pId)}
+            currentUser={currentUser}
+            onOpenStudyPage={(pId) => handleOpenStudyModal(pId)}
           />
         </main>
       )}
 
-      {/* SECTION 5: FOOTER AND SUPPORT (Landing View only) */}
+      {/* SECTION 5: FOOTER (Landing View only) */}
       {!activePlanObj && !isDashboardView && (
         <Footer
           onScrollToTop={() => handleScrollToSection('top')}
           onOpenAiModal={() => handleOpenAi()}
           onOpenIdCardModal={handleOpenIdCardModal}
           onOpenRegistration={() => handleOpenRegistration('plan-01')}
-          onOpenStudyPage={handleOpenStudyPage}
+          onOpenStudyModal={handleOpenStudyModal}
+          onOpenPlansModal={() => setPlansModalOpen(true)}
+          onOpenVideoModal={() => setVideoModalOpen(true)}
+          onOpenTracingModal={() => setTracingModalOpen(true)}
+          onOpenHomeworkModal={() => setHomeworkModalOpen(true)}
         />
       )}
 
-      {/* MODALS */}
-      
-      {/* 0. Dedicated Kids AI Teacher Zone (Story Generator, Voice Mic, Quiz & Star Certificate) */}
+      {/* ------------------------------------------------------------- */}
+      {/* 🚀 ALL BUTTONS OPEN INTERACTIVE DIALOG BOXES (MODALS SYSTEM) */}
+      {/* ------------------------------------------------------------- */}
+
+      {/* 1. Plans Dialog Box Modal */}
+      <PlansDialogModal
+        isOpen={plansModalOpen}
+        onClose={() => setPlansModalOpen(false)}
+        onSelectPlanStudy={(pId) => handleOpenStudyModal(pId)}
+        onSelectPlanJoin={(pId) => handleOpenRegistration(pId)}
+      />
+
+      {/* 2. Video Lessons Player Dialog Box Modal */}
+      <VideoModalDialog
+        isOpen={videoModalOpen}
+        onClose={() => setVideoModalOpen(false)}
+        planId={selectedStudyPlanId}
+      />
+
+      {/* 3. Digital Tracing Pad Dialog Box Modal */}
+      <TracingModalDialog
+        isOpen={tracingModalOpen}
+        onClose={() => setTracingModalOpen(false)}
+        planId={selectedStudyPlanId}
+      />
+
+      {/* 4. Daily Homework & Check Dialog Box Modal */}
+      <HomeworkModalDialog
+        isOpen={homeworkModalOpen}
+        onClose={() => setHomeworkModalOpen(false)}
+        planId={selectedStudyPlanId}
+      />
+
+      {/* 5. Complete Study Resource & NCERT Notes Viewer Dialog Box Modal */}
+      <StudyResourceViewerModal
+        isOpen={studyModalOpen}
+        onClose={() => setStudyModalOpen(false)}
+        resource={null}
+        plan={currentStudyPlanObj}
+        currentUser={currentUser}
+        onOpenLogin={() => setLoginModalOpen(true)}
+        onOpenRegistration={(pId) => handleOpenRegistration(pId)}
+      />
+
+      {/* 6. Dedicated Kids AI Teacher Zone Dialog Box Modal */}
       <KidsAiTeacherZone
         isOpen={kidsAiZoneOpen}
         onClose={() => setKidsAiZoneOpen(false)}
-        onOpenStudyPage={handleOpenStudyPage}
+        onOpenStudyPage={(pId) => handleOpenStudyModal(pId)}
       />
 
-      {/* 1. Student AI Advisor Modal */}
+      {/* 8. 24x7 AI Assistant Tutor Dialog Box Modal */}
       <AiAssistantModal
         isOpen={aiModalOpen}
         onClose={() => setAiModalOpen(false)}
@@ -245,7 +326,7 @@ export default function App() {
         }}
       />
 
-      {/* 2. Registration & Activation Modal */}
+      {/* 9. Registration & Account Verification Pass Dialog Box Modal */}
       <RegistrationModal
         isOpen={registrationModalOpen}
         onClose={() => setRegistrationModalOpen(false)}
@@ -257,7 +338,7 @@ export default function App() {
         }}
       />
 
-      {/* 3. Member Login Modal */}
+      {/* 10. Student Login Dialog Box Modal */}
       <LoginModal
         isOpen={loginModalOpen}
         onClose={() => setLoginModalOpen(false)}
@@ -268,29 +349,42 @@ export default function App() {
         }}
       />
 
-      {/* 4. Student Academic Dashboard Modal */}
+      {/* 11. Student Academic Dashboard Dialog Box Modal */}
       {currentUser && (
         <UserDashboardModal
           isOpen={dashboardModalOpen}
           onClose={() => setDashboardModalOpen(false)}
           currentUser={currentUser}
+          onOpenStudyPage={(pId) => handleOpenStudyModal(pId)}
+          onOpenIdCardModal={handleOpenIdCardModal}
           onLogout={handleLogout}
-          onOpenStudyPage={handleOpenStudyPage}
-          onOpenIdCard={() => {
-            setDashboardModalOpen(false);
-            setIdCardModalOpen(true);
-          }}
-          onProfileUpdated={(updated) => setCurrentUser(updated)}
         />
       )}
 
-      {/* 5. Digital Smart ID Card Modal */}
+      {/* 12. Smart Student ID Card Dialog Box Modal */}
       {currentUser && (
         <IdCardModal
           isOpen={idCardModalOpen}
           onClose={() => setIdCardModalOpen(false)}
-          member={currentUser}
+          currentUser={currentUser}
         />
+      )}
+
+      {/* 13. Secure Admin Panel Dialog Box Modal (Firebase Live DB & Kit Setup) */}
+      <AdminPanelModal
+        isOpen={adminModalOpen}
+        onClose={() => setAdminModalOpen(false)}
+        onUsersUpdated={() => {
+          const u = getCurrentSessionUser();
+          if (u) setCurrentUser(u);
+        }}
+      />
+
+      {/* 14. IOIS Nursery Alphabet Series (A to Z) Educational Workbook Modal */}
+      {nurseryWorkbookOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/85 backdrop-blur-sm animate-in fade-in">
+          <NurseryAlphabetWorkbook onClose={() => setNurseryWorkbookOpen(false)} />
+        </div>
       )}
 
     </div>

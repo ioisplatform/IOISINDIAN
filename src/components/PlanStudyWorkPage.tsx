@@ -57,8 +57,7 @@ export const PlanStudyWorkPage: React.FC<PlanStudyWorkPageProps> = ({
     isLockedOut,
     lockoutSeconds,
     validatePassword,
-    lockPlan,
-    expectedFormatHint
+    lockPlan
   } = useEncryptedPlanAuth(plan.id, plan.planNumber, currentUser);
 
   // Modal viewer state
@@ -215,19 +214,8 @@ export const PlanStudyWorkPage: React.FC<PlanStudyWorkPageProps> = ({
                 PLAN 0{plan.planNumber}: {plan.name}
               </div>
               <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-md mx-auto">
-                अनधिकृत उपयोगकर्ताओं से सामग्री की सुरक्षा हेतु, इस प्लान का अध्ययन मटेरियल, नोट्स और वर्क असाइनमेंट्स केवल अधिकृत सुरक्षा पासवर्ड सत्यापन के बाद ही रेंडर होंगे।
+                अनधिकृत उपयोगकर्ताओं से सामग्री की सुरक्षा हेतु, इस प्लान का अध्ययन मटेरियल, नोट्स और वर्क असाइनमेंट्स केवल अधिकृत सुरक्षा पासवर्ड सत्यापन के बाद ही रेंडर होंगे। कृपया अपना पासवर्ड दर्ज करें।
               </p>
-
-              <div className="p-3 rounded-2xl bg-slate-900/90 border border-slate-700/80 text-xs text-slate-300 space-y-1 text-left">
-                <div className="flex items-center gap-1.5 font-bold text-amber-300">
-                  <KeyRound className="w-3.5 h-3.5 shrink-0" />
-                  <span>प्लान पासवर्ड आईडी प्रारूप:</span>
-                </div>
-                <div className="font-mono text-[11px] bg-slate-950 p-2 rounded-xl text-emerald-400 border border-slate-800 flex items-center justify-between">
-                  <span>उदा. Plan 0{plan.planNumber} पासवर्ड: <strong className="text-white">{expectedFormatHint}</strong></span>
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider">अधिकृत कोड</span>
-                </div>
-              </div>
             </div>
 
             {/* Lockout Notice if locked out */}
@@ -259,7 +247,7 @@ export const PlanStudyWorkPage: React.FC<PlanStudyWorkPageProps> = ({
                   <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
                   <input
                     type={showPassword ? 'text' : 'password'}
-                    placeholder={`उदा. ${expectedFormatHint}`}
+                    placeholder="प्लान सुरक्षा पासवर्ड दर्ज करें"
                     value={passwordInput}
                     disabled={isVerifying || isLockedOut}
                     onChange={(e) => setPasswordInput(e.target.value)}

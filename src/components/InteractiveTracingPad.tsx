@@ -6,11 +6,11 @@ import {
   Download, 
   CheckCircle2, 
   Sparkles, 
-  Eye, 
-  EyeOff,
-  Palette,
-  Type
+  Volume2,
+  BookOpen
 } from 'lucide-react';
+import { AlphabetObjectIllustration } from './AlphabetIllustrations';
+import { NURSERY_A_TO_Z_PAGES } from './NurseryAlphabetWorkbook';
 
 interface InteractiveTracingPadProps {
   planId: string;
@@ -18,41 +18,43 @@ interface InteractiveTracingPadProps {
   onTracingCompleted?: () => void;
 }
 
-// Tracing Templates by Plan
-const TRACING_TEMPLATES: Record<string, { id: string; label: string; guideText: string; hint: string }[]> = {
-  'plan-01': [
+// Hindi & Other Subject Tracing Templates
+const OTHER_TRACING_TEMPLATES: Record<string, { id: string; label: string; guideText: string; hint: string }[]> = {
+  'hindi-swar': [
     { id: 'swar-a', label: 'स्वर: अ (अनार)', guideText: 'अ', hint: 'बाईं ओर दो घुमाव बनाएं, फिर बीच में छोटी रेखा और खड़ी रेखा खींचें।' },
     { id: 'swar-aa', label: 'स्वर: आ (आम)', guideText: 'आ', hint: 'अ बनाकर दाईं तरफ एक और खड़ी मात्रा (ा) लगाएं।' },
     { id: 'swar-i', label: 'स्वर: इ (इमली)', guideText: 'इ', hint: 'छोटी खड़ी रेखा से शुरू करके अंग्रेजी का S जैसा घुमाव बनाएं।' },
+    { id: 'swar-ee', label: 'स्वर: ई (ईख)', guideText: 'ई', hint: 'इ बनाकर ऊपर की ओर रेफ (ी) की मात्रा लगाएं।' },
+    { id: 'swar-u', label: 'स्वर: उ (उल्लू)', guideText: 'उ', hint: 'बाईं तरफ तीन जैसा घुमाव बनाएं।' },
     { id: 'vyanjan-ka', label: 'व्यंजन: क (कमल)', guideText: 'क', hint: 'बीच में खड़ी रेखा खींचें, बाईं ओर गोल वृत्त और दाईं ओर नीचे मुड़ा हुआ चाप बनाएं।' },
-    { id: 'num-123', label: 'गिनती: १ २ ३ (1 2 3)', guideText: '1 2 3', hint: 'संख्याओं के ऊपर सावधानी से अपनी पेंसिल चलाएं।' },
-    { id: 'eng-abc', label: 'English: A B C', guideText: 'A B C', hint: 'कैपिटल अक्षरों के डॉट्स पर हाथ फेरें।' }
+    { id: 'vyanjan-kha', label: 'व्यंजन: ख (खरगोश)', guideText: 'ख', hint: 'र जैसा घुमाव बनाकर व को जोड़ें।' },
+    { id: 'vyanjan-ga', label: 'व्यंजन: ग (गमला)', guideText: 'ग', hint: 'खड़ी रेखा को नीचे गोल मोड़ें और साथ में एक सीधी खड़ी रेखा खींचें।' }
+  ],
+  'numbers': [
+    { id: 'num-123', label: 'गिनती: 1 2 3 (१ २ ३)', guideText: '1 2 3', hint: 'संख्याओं के ऊपर सावधानी से अपनी पेंसिल चलाएं।' },
+    { id: 'num-456', label: 'गिनती: 4 5 6 (४ ५ ६)', guideText: '4 5 6', hint: 'संख्याओं 4, 5 और 6 के ऊपर हाथ फेरें।' },
+    { id: 'num-789', label: 'गिनती: 7 8 9 (७ ८ ९)', guideText: '7 8 9', hint: 'संख्याओं 7, 8 और 9 का अभ्यास करें।' },
+    { id: 'num-10', label: 'गिनती: 10 (१०)', guideText: '10', hint: 'एक और शून्य लिखकर दस बनाएं।' }
   ],
   'plan-02': [
     { id: 'flowchart', label: 'कंप्यूटर फ्लोचार्ट (Start → Process → End)', guideText: 'START → [CODE] → END', hint: 'प्रोग्रामिंग लॉजिक फ्लोचार्ट बनाएं।' },
-    { id: 'keyboard-shortcuts', label: 'शॉर्टकट कीज: Ctrl+C, Ctrl+V', guideText: 'Ctrl+C / Ctrl+V', hint: 'कंप्यूटर शॉर्टकट का हाथ से अभ्यास करें।' },
-    { id: 'binary-code', label: 'बाइनरी कोड: 1 0 1 0 1', guideText: '1 0 1 0 1', hint: 'कंप्यूटर की मूल भाषा 0 और 1 का अभ्यास।' }
+    { id: 'keyboard-shortcuts', label: 'शॉर्टकट कीज: Ctrl+C, Ctrl+V', guideText: 'Ctrl+C / Ctrl+V', hint: 'कंप्यूटर शॉर्टकट का हाथ से अभ्यास करें।' }
   ],
   'plan-03': [
     { id: 'cursive-sentence', label: 'Cursive: Practice Makes Perfect', guideText: 'Practice Makes Perfect', hint: 'अंग्रेजी में सुंदर करसिव हैंडराइटिंग का अभ्यास करें।' },
-    { id: 'signature-prep', label: 'प्रोफेशनल सिग्नेचर अभ्यास', guideText: 'Professional Signature', hint: 'अपना आधिकारिक हस्ताक्षर सुंदर बनाएं।' },
     { id: 'self-intro', label: 'Interview Intro: Hello Sir/Ma\'am', guideText: 'Hello Sir / Ma\'am', hint: 'स्पष्ट और आत्मविश्वास से भरा हैंडराइटिंग अभ्यास।' }
   ],
   'plan-04': [
-    { id: 'family-budget', label: 'बजट ट्री (आय → बचत → व्यय)', guideText: 'Income = Save + Spend', hint: 'पारिवारिक वित्तीय योजना का आरेख बनाएं।' },
-    { id: 'gk-map', label: 'भारत का प्रतीक (सत्यमेव जयते)', guideText: 'सत्यमेव जयते', hint: 'राष्ट्रीय आदर्श वाक्य का सुलेख।' }
+    { id: 'family-budget', label: 'बजट ट्री (आय → बचत → व्यय)', guideText: 'Income = Save + Spend', hint: 'पारिवारिक वित्तीय योजना का आरेख बनाएं।' }
   ],
   'plan-05': [
-    { id: 'math-formula', label: 'बीजगणित: (a+b)² = a² + 2ab + b²', guideText: '(a+b)² = a² + 2ab + b²', hint: 'गणितीय सूत्र को लिखकर याद करें।' },
-    { id: 'physics-diagram', label: 'ओम का नियम: V = I × R', guideText: 'V = I × R (Ohm\'s Law)', hint: 'भौतिकी सूत्र व सर्किट आरेख बनाएं।' }
+    { id: 'math-formula', label: 'बीजगणित: (a+b)² = a² + 2ab + b²', guideText: '(a+b)² = a² + 2ab + b²', hint: 'गणितीय सूत्र को लिखकर याद करें।' }
   ],
   'plan-06': [
-    { id: 'agency-workflow', label: 'डिजिटल सर्विस प्रोसेस मैप', guideText: 'Client → Work → Delivery', hint: 'सर्विस सेंटर का कार्यप्रवाह आरेखित करें।' },
     { id: 'rtps-steps', label: 'RTPS आवेदन प्रक्रिया', guideText: 'Apply → Verify → Download', hint: 'ऑनलाइन सेवा के चरणों का प्रवाह चार्ट।' }
   ],
   'plan-07': [
-    { id: 'leadership-vision', label: 'लीडरशिप रोडमैप: Vision 2030', guideText: 'Vision → Action → Success', hint: 'अपने जीवन और करियर का मास्टर रोडमैप बनाएं।' },
-    { id: 'master-swot', label: 'SWOT एनालिसिस: S W O T', guideText: 'STRENGTH • WEAKNESS • GOAL', hint: 'आत्म-विश्लेषण एवं रणनीतिक चार्ट बनाएं।' }
+    { id: 'leadership-vision', label: 'लीडरशिप रोडमैप: Vision 2030', guideText: 'Vision → Action → Success', hint: 'अपने जीवन और करियर का मास्टर रोडमैप बनाएं।' }
   ]
 };
 
@@ -63,23 +65,45 @@ export const InteractiveTracingPad: React.FC<InteractiveTracingPadProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [tool, setTool] = useState<'pen' | 'eraser'>('pen');
-  const [color, setColor] = useState('#2563eb'); // Royal blue
-  const [brushSize, setBrushSize] = useState(4);
-  const [showGuide, setShowGuide] = useState(true);
+  const [color, setColor] = useState('#dc2626'); // Red pen
+  const [brushSize, setBrushSize] = useState(6);
   const [isDone, setIsDone] = useState(false);
 
-  const templates = TRACING_TEMPLATES[planId] || TRACING_TEMPLATES['plan-01'];
-  const [selectedTemplate, setSelectedTemplate] = useState(templates[0]);
+  // Tab: 'alpha' | 'hindi' | 'num'
+  const [activeTab, setActiveTab] = useState<'alpha' | 'hindi' | 'num'>(
+    planId === 'plan-01' ? 'alpha' : 'alpha'
+  );
 
-  // Handle template switch
+  // For A to Z alphabet
+  const [selectedAlphaIndex, setSelectedAlphaIndex] = useState(0);
+  const currentAlphaPage = NURSERY_A_TO_Z_PAGES[selectedAlphaIndex] || NURSERY_A_TO_Z_PAGES[0];
+
+  // For Hindi / Num
+  const hindiList = OTHER_TRACING_TEMPLATES['hindi-swar'];
+  const [selectedHindiId, setSelectedHindiId] = useState(hindiList[0].id);
+
+  const numList = OTHER_TRACING_TEMPLATES['numbers'];
+  const [selectedNumId, setSelectedNumId] = useState(numList[0].id);
+
+  // Active guide text
+  const currentGuideText = activeTab === 'alpha' 
+    ? `${currentAlphaPage.letter}  ${currentAlphaPage.lowerLetter}` 
+    : activeTab === 'hindi'
+      ? (hindiList.find(h => h.id === selectedHindiId)?.guideText || 'अ')
+      : (numList.find(n => n.id === selectedNumId)?.guideText || '1 2 3');
+
+  const currentHint = activeTab === 'alpha'
+    ? `नीचे दिए गए बिंदुओं पर पेंसिल/उंगली चलाकर ${currentAlphaPage.letter} (${currentAlphaPage.lowerLetter}) लिखने का अभ्यास करें: ${currentAlphaPage.strokeOrderGuide}`
+    : activeTab === 'hindi'
+      ? (hindiList.find(h => h.id === selectedHindiId)?.hint || '')
+      : (numList.find(n => n.id === selectedNumId)?.hint || '');
+
+  // Redraw when template changes
   useEffect(() => {
-    const list = TRACING_TEMPLATES[planId] || TRACING_TEMPLATES['plan-01'];
-    setSelectedTemplate(list[0]);
     clearCanvas();
-  }, [planId]);
+  }, [activeTab, selectedAlphaIndex, selectedHindiId, selectedNumId]);
 
-  // Set up canvas sizing
+  // Adjust canvas width to container
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -87,9 +111,9 @@ export const InteractiveTracingPad: React.FC<InteractiveTracingPadProps> = ({
     if (!parent) return;
 
     canvas.width = parent.clientWidth || 700;
-    canvas.height = 320;
+    canvas.height = 260;
     redrawGuide();
-  }, [selectedTemplate, showGuide]);
+  }, [currentGuideText]);
 
   const redrawGuide = () => {
     const canvas = canvasRef.current;
@@ -97,44 +121,58 @@ export const InteractiveTracingPad: React.FC<InteractiveTracingPadProps> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Background
+    // Crisp white background
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Ruled lines (like student school notebook)
-    ctx.strokeStyle = '#e2e8f0';
-    ctx.lineWidth = 1;
-    for (let y = 40; y < canvas.height; y += 40) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(canvas.width, y);
-      ctx.stroke();
-    }
-
-    // Top red margin line
-    ctx.strokeStyle = '#fecaca';
+    // 4-Line School Notebook Guides (English primary ruled lines)
+    // Red Topline
+    ctx.strokeStyle = '#ef4444';
     ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(50, 0);
-    ctx.lineTo(50, canvas.height);
+    ctx.moveTo(30, 60);
+    ctx.lineTo(canvas.width - 30, 60);
     ctx.stroke();
 
-    // Dotted guide text if enabled
-    if (showGuide && selectedTemplate) {
-      ctx.save();
-      ctx.font = 'bold 54px "Noto Sans Devanagari", "Segoe UI", sans-serif';
-      ctx.fillStyle = '#cbd5e1';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      
-      // Draw dotted text outline
-      ctx.setLineDash([4, 4]);
-      ctx.strokeStyle = '#94a3b8';
-      ctx.lineWidth = 2;
-      ctx.strokeText(selectedTemplate.guideText, canvas.width / 2 + 20, canvas.height / 2);
-      ctx.fillText(selectedTemplate.guideText, canvas.width / 2 + 20, canvas.height / 2);
-      ctx.restore();
-    }
+    // Blue Midline (Dashed)
+    ctx.strokeStyle = '#60a5fa';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([6, 6]);
+    ctx.beginPath();
+    ctx.moveTo(30, 110);
+    ctx.lineTo(canvas.width - 30, 110);
+    ctx.stroke();
+
+    // Blue Baseline (Dashed)
+    ctx.beginPath();
+    ctx.moveTo(30, 160);
+    ctx.lineTo(canvas.width - 30, 160);
+    ctx.stroke();
+    ctx.setLineDash([]); // Reset line dash
+
+    // Red Bottomline
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(30, 210);
+    ctx.lineTo(canvas.width - 30, 210);
+    ctx.stroke();
+
+    // Dotted Tracing Guides for letter / character
+    ctx.save();
+    ctx.font = 'bold 90px "Comic Sans MS", "Noto Sans Devanagari", sans-serif';
+    ctx.fillStyle = '#e2e8f0';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    ctx.setLineDash([5, 5]);
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 2.5;
+
+    // Draw dotted outline guide
+    ctx.strokeText(currentGuideText, canvas.width / 2, 135);
+    ctx.fillText(currentGuideText, canvas.width / 2, 135);
+    ctx.restore();
   };
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
@@ -145,8 +183,14 @@ export const InteractiveTracingPad: React.FC<InteractiveTracingPadProps> = ({
 
     setIsDrawing(true);
     const rect = canvas.getBoundingClientRect();
-    const x = 'touches' in e ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
-    const y = 'touches' in e ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+
+    const x = (clientX - rect.left) * scaleX;
+    const y = (clientY - rect.top) * scaleY;
 
     ctx.beginPath();
     ctx.moveTo(x, y);
@@ -160,31 +204,43 @@ export const InteractiveTracingPad: React.FC<InteractiveTracingPadProps> = ({
     if (!ctx) return;
 
     const rect = canvas.getBoundingClientRect();
-    const x = 'touches' in e ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
-    const y = 'touches' in e ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+
+    const x = (clientX - rect.left) * scaleX;
+    const y = (clientY - rect.top) * scaleY;
 
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-
-    if (tool === 'eraser') {
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = brushSize * 4;
-    } else {
-      ctx.strokeStyle = color;
-      ctx.lineWidth = brushSize;
-    }
+    ctx.strokeStyle = color;
+    ctx.lineWidth = brushSize;
 
     ctx.lineTo(x, y);
     ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x, y);
   };
 
   const stopDrawing = () => {
     setIsDrawing(false);
   };
 
+  // Explicit 'मिटाएं' action
   const clearCanvas = () => {
     redrawGuide();
     setIsDone(false);
+  };
+
+  const speak = (text: string) => {
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'hi-IN';
+    utterance.rate = 0.85;
+    window.speechSynthesis.speak(utterance);
   };
 
   const handleDownload = () => {
@@ -193,220 +249,276 @@ export const InteractiveTracingPad: React.FC<InteractiveTracingPadProps> = ({
     const url = canvas.toDataURL('image/png');
     const a = document.createElement('a');
     a.href = url;
-    a.download = `IOIS_Tracing_Plan0${planNumber}_${selectedTemplate.id}.png`;
+    a.download = `IOIS_Tracing_${activeTab}_${activeTab === 'alpha' ? currentAlphaPage.letter : 'slate'}.png`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
   };
 
-  const handleMarkCompleted = () => {
-    setIsDone(true);
-    if (onTracingCompleted) {
-      onTracingCompleted();
-    }
-  };
-
   const colors = [
-    { label: 'नीली स्याही (Blue)', hex: '#2563eb' },
-    { label: 'काली पेंसिल (Black)', hex: '#0f172a' },
-    { label: 'हरी स्याही (Green)', hex: '#059669' },
-    { label: 'लाल स्याही (Red)', hex: '#dc2626' },
+    { label: 'लाल (Red)', hex: '#dc2626' },
+    { label: 'नीला (Blue)', hex: '#2563eb' },
+    { label: 'हरा (Green)', hex: '#16a34a' },
+    { label: 'काला (Black)', hex: '#0f172a' },
     { label: 'केसरिया (Orange)', hex: '#ea580c' },
-    { label: 'बैंगनी (Purple)', hex: '#7c3aed' }
+    { label: 'बैंगनी (Purple)', hex: '#9333ea' }
   ];
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-5">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="p-2 rounded-xl bg-orange-100 text-orange-700">
-              <Pencil className="w-5 h-5" />
+    <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-4">
+      
+      {/* Tab Switcher: A-Z Alphabet vs Hindi Swar vs Numbers */}
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-3">
+        <div className="flex items-center gap-2">
+          <span className="p-2 rounded-xl bg-purple-100 text-purple-700">
+            <Pencil className="w-5 h-5" />
+          </span>
+          <div>
+            <h3 className="font-extrabold text-slate-900 text-base sm:text-lg leading-tight">
+              अक्षर व अंक डिजिटल स्लेट (2. अक्षर लिखो)
+            </h3>
+            <p className="text-xs text-slate-500">
+              नीचे दिए गए बिंदुओं पर पेंसिल/उंगली चलाकर अक्षर लिखने का अभ्यास करें
+            </p>
+          </div>
+        </div>
+
+        {/* Tab Buttons */}
+        <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl">
+          <button
+            onClick={() => setActiveTab('alpha')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all ${
+              activeTab === 'alpha' 
+                ? 'bg-orange-600 text-white shadow-xs' 
+                : 'text-slate-700 hover:text-slate-900'
+            }`}
+          >
+            🔤 A to Z (26 अक्षर)
+          </button>
+          <button
+            onClick={() => setActiveTab('hindi')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all ${
+              activeTab === 'hindi' 
+                ? 'bg-orange-600 text-white shadow-xs' 
+                : 'text-slate-700 hover:text-slate-900'
+            }`}
+          >
+            🇮🇳 हिंदी स्वर (अ से ई)
+          </button>
+          <button
+            onClick={() => setActiveTab('num')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all ${
+              activeTab === 'num' 
+                ? 'bg-orange-600 text-white shadow-xs' 
+                : 'text-slate-700 hover:text-slate-900'
+            }`}
+          >
+            🔢 1 2 3 गिनती
+          </button>
+        </div>
+      </div>
+
+      {/* A to Z Horizontal Quick Selection Bar */}
+      {activeTab === 'alpha' && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-xs font-bold text-slate-600">
+            <span>अक्षर चुनें (Select Letter A to Z):</span>
+            <span className="text-orange-600 font-mono">
+              पेज {currentAlphaPage.pageNumber} of 26
             </span>
-            <div>
-              <h3 className="font-extrabold text-slate-900 text-lg sm:text-xl flex items-center gap-2">
-                <span>डिजिटल अक्षर व चित्र ट्रेसिंग पैड (Tracing Canvas)</span>
-                {isDone && (
-                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> पूर्ण हुआ!
-                  </span>
-                )}
-              </h3>
-              <p className="text-xs text-slate-500">
-                ट्रेसिंग गाइड के ऊपर माउस या उंगली से पेंसिल चलाएं और अपनी हैंडराइटिंग सुधारें
-              </p>
-            </div>
           </div>
-        </div>
 
-        {/* Template Select Dropdown */}
-        <div className="flex items-center gap-2">
-          <label className="text-xs font-bold text-slate-600 shrink-0">ट्रेसिंग विषय:</label>
-          <select
-            value={selectedTemplate.id}
-            onChange={(e) => {
-              const found = templates.find(t => t.id === e.target.value);
-              if (found) {
-                setSelectedTemplate(found);
-                clearCanvas();
-              }
-            }}
-            className="text-xs font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500"
-          >
-            {templates.map(t => (
-              <option key={t.id} value={t.id}>
-                {t.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Guide hint */}
-      <div className="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-3 flex items-center justify-between text-xs text-amber-900 gap-2">
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
-          <span><strong>अभ्यास निर्देश:</strong> {selectedTemplate.hint}</span>
-        </div>
-        <button
-          type="button"
-          onClick={() => setShowGuide(!showGuide)}
-          className="text-[11px] font-bold text-amber-800 hover:text-amber-950 flex items-center gap-1 bg-amber-100/70 px-2.5 py-1 rounded-lg shrink-0"
-        >
-          {showGuide ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-          <span>{showGuide ? 'गाइड छुपाएं' : 'गाइड दिखाएं'}</span>
-        </button>
-      </div>
-
-      {/* Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-200">
-        
-        {/* Tool selector */}
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setTool('pen')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
-              tool === 'pen'
-                ? 'bg-orange-600 text-white shadow-sm'
-                : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-300'
-            }`}
-          >
-            <Pencil className="w-3.5 h-3.5" />
-            <span>पेंसिल</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setTool('eraser')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
-              tool === 'eraser'
-                ? 'bg-slate-900 text-white shadow-sm'
-                : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-300'
-            }`}
-          >
-            <Eraser className="w-3.5 h-3.5" />
-            <span>रबर (Eraser)</span>
-          </button>
-        </div>
-
-        {/* Color picker */}
-        {tool === 'pen' && (
-          <div className="flex items-center gap-1.5">
-            <span className="text-[11px] font-bold text-slate-500 mr-1 hidden sm:inline">रंग:</span>
-            {colors.map(c => (
+          <div className="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-none">
+            {NURSERY_A_TO_Z_PAGES.map((p, idx) => (
               <button
-                key={c.hex}
-                type="button"
-                onClick={() => setColor(c.hex)}
-                title={c.label}
-                className={`w-6 h-6 rounded-full transition-transform ${
-                  color === c.hex ? 'scale-125 ring-2 ring-offset-2 ring-slate-800' : 'hover:scale-110'
-                }`}
-                style={{ backgroundColor: c.hex }}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Thickness */}
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] font-bold text-slate-500">मोटाई:</span>
-          <div className="flex items-center gap-1">
-            {[2, 4, 8].map(size => (
-              <button
-                key={size}
-                type="button"
-                onClick={() => setBrushSize(size)}
-                className={`px-2 py-1 rounded-lg text-[11px] font-bold transition-all ${
-                  brushSize === size
-                    ? 'bg-orange-600 text-white'
-                    : 'bg-white text-slate-600 border border-slate-300'
+                key={p.letter}
+                onClick={() => setSelectedAlphaIndex(idx)}
+                className={`w-8 h-8 rounded-xl font-black text-xs shrink-0 transition-all flex items-center justify-center ${
+                  selectedAlphaIndex === idx
+                    ? 'bg-orange-600 text-white shadow-md scale-110 ring-2 ring-orange-300'
+                    : 'bg-slate-50 text-slate-700 hover:bg-orange-50 border border-slate-200'
                 }`}
               >
-                {size === 2 ? 'बारीक' : size === 4 ? 'मध्यम' : 'मोटी'}
+                {p.letter}
               </button>
             ))}
           </div>
         </div>
+      )}
 
-        {/* Reset & Download */}
-        <div className="flex items-center gap-2">
+      {/* Hindi Selection Bar */}
+      {activeTab === 'hindi' && (
+        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          {hindiList.map((h) => (
+            <button
+              key={h.id}
+              onClick={() => setSelectedHindiId(h.id)}
+              className={`px-3 py-1.5 rounded-xl font-bold text-xs shrink-0 border transition-all ${
+                selectedHindiId === h.id
+                  ? 'bg-emerald-600 text-white border-emerald-700 shadow-sm'
+                  : 'bg-white text-slate-700 hover:bg-emerald-50 border-slate-200'
+              }`}
+            >
+              {h.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Numbers Selection Bar */}
+      {activeTab === 'num' && (
+        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          {numList.map((n) => (
+            <button
+              key={n.id}
+              onClick={() => setSelectedNumId(n.id)}
+              className={`px-3 py-1.5 rounded-xl font-bold text-xs shrink-0 border transition-all ${
+                selectedNumId === n.id
+                  ? 'bg-blue-600 text-white border-blue-700 shadow-sm'
+                  : 'bg-white text-slate-700 hover:bg-blue-50 border-slate-200'
+              }`}
+            >
+              {n.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Sachitra Object Banner for Current Letter */}
+      {activeTab === 'alpha' && (
+        <div className="p-3 bg-amber-50/80 rounded-2xl border border-amber-200 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-14 h-14 rounded-2xl bg-white border-2 border-amber-300 flex items-center justify-center shrink-0 shadow-xs">
+              <AlphabetObjectIllustration letter={currentAlphaPage.letter} className="w-11 h-11" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-base font-black text-slate-900">
+                  {currentAlphaPage.letter} for {currentAlphaPage.word}
+                </span>
+                <span className="text-xs font-bold text-orange-600 bg-orange-100 px-2 py-0.5 rounded-md">
+                  {currentAlphaPage.hindiMeaning}
+                </span>
+              </div>
+              <p className="text-xs text-slate-700 mt-0.5">
+                {currentAlphaPage.section1Instruction}
+              </p>
+            </div>
+          </div>
+
           <button
-            type="button"
-            onClick={clearCanvas}
-            className="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs font-bold flex items-center gap-1"
+            onClick={() => speak(`${currentAlphaPage.letter} for ${currentAlphaPage.word}। ${currentAlphaPage.section1Instruction}`)}
+            className="p-2 rounded-xl bg-white border border-amber-300 text-amber-900 hover:bg-amber-100 shrink-0"
+            title="बोलकर सुनें"
           >
-            <RotateCcw className="w-3.5 h-3.5 text-red-500" />
-            <span>मिटाएं (Clear)</span>
+            <Volume2 className="w-4 h-4 text-amber-600" />
+          </button>
+        </div>
+      )}
+
+      {/* Tracing Controls Bar with prominent 'मिटाएं' Button */}
+      <div className="flex flex-wrap items-center justify-between gap-2.5 bg-slate-50 p-2.5 rounded-2xl border border-slate-200">
+        
+        {/* Colors */}
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs font-bold text-slate-600 mr-1 hidden sm:inline">पेंसिल रंग:</span>
+          {colors.map((c) => (
+            <button
+              key={c.hex}
+              onClick={() => setColor(c.hex)}
+              className={`w-6 h-6 rounded-full border-2 transition-transform ${
+                color === c.hex ? 'scale-125 border-slate-900 shadow-xs' : 'border-white'
+              }`}
+              style={{ backgroundColor: c.hex }}
+              title={c.label}
+            />
+          ))}
+        </div>
+
+        {/* Brush Size */}
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs font-bold text-slate-600">मोटाई:</span>
+          {[4, 7, 10].map((s) => (
+            <button
+              key={s}
+              onClick={() => setBrushSize(s)}
+              className={`px-2 py-0.5 rounded-lg text-xs font-bold ${
+                brushSize === s ? 'bg-slate-900 text-white' : 'bg-white text-slate-700 border border-slate-200'
+              }`}
+            >
+              {s === 4 ? 'पतली' : s === 7 ? 'मध्यम' : 'मोटी'}
+            </button>
+          ))}
+        </div>
+
+        {/* Action Buttons: मिटाएं & Save */}
+        <div className="flex items-center gap-2">
+          {/* PROMINENT 'मिटाएं' BUTTON */}
+          <button
+            onClick={clearCanvas}
+            className="px-3.5 py-1.5 rounded-xl bg-white border-2 border-red-300 text-xs font-black text-red-600 hover:bg-red-50 hover:border-red-500 flex items-center gap-1.5 shadow-2xs transition-all active:scale-95"
+            title="स्लेट साफ करें (मिटाएं)"
+          >
+            <Eraser className="w-4 h-4 text-red-600" />
+            <span>मिटाएं</span>
           </button>
 
           <button
-            type="button"
             onClick={handleDownload}
-            className="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs font-bold flex items-center gap-1"
+            className="px-3 py-1.5 rounded-xl bg-white border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-100 flex items-center gap-1.5 shadow-2xs"
+            title="ड्राइंग सहेजें"
           >
-            <Download className="w-3.5 h-3.5 text-blue-600" />
-            <span>सेव करें (.png)</span>
+            <Download className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">डाउनलोड</span>
           </button>
         </div>
 
       </div>
 
-      {/* Canvas Area */}
-      <div className="relative border-2 border-slate-300 rounded-2xl overflow-hidden bg-white shadow-inner touch-none cursor-crosshair">
+      {/* Prompt Instruction */}
+      <div className="text-xs text-slate-700 bg-slate-50 p-2.5 rounded-xl border border-slate-200 flex items-center gap-2">
+        <span className="w-5 h-5 rounded-full bg-orange-600 text-white flex items-center justify-center font-bold text-xs shrink-0">
+          ✍
+        </span>
+        <p className="font-semibold">
+          {currentHint}
+        </p>
+      </div>
+
+      {/* Main Drawing Canvas Container with 4-Line Notebook */}
+      <div className="relative aspect-[7/3] max-h-[300px] w-full rounded-2xl overflow-hidden border-2 border-slate-300 shadow-inner bg-white select-none">
         <canvas
           ref={canvasRef}
           onMouseDown={startDrawing}
-          onMouseMove={draw}
           onMouseUp={stopDrawing}
           onMouseLeave={stopDrawing}
+          onMouseMove={draw}
           onTouchStart={startDrawing}
-          onTouchMove={draw}
           onTouchEnd={stopDrawing}
-          className="w-full block"
-          style={{ height: '320px' }}
+          onTouchMove={draw}
+          className="absolute inset-0 w-full h-full cursor-crosshair touch-none z-10"
         />
       </div>
 
-      {/* Action Footer */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-        <div className="text-xs text-slate-500">
-          💡 <strong>टिप:</strong> मोबाइल या टैबलेट पर उंगली या टच-पेन से सीधे आसानी से लिख सकते हैं।
+      {/* Bottom Footer Feedback & Completion */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+        <div className="text-xs text-slate-500 font-medium">
+          💡 युक्ति: टच स्क्रीन मोबाइल/टैबलेट पर अपनी उंगली से सीधे डॉट्स पर रेखा खींचें।
         </div>
 
         <button
-          type="button"
-          onClick={handleMarkCompleted}
-          className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all shadow-md ${
+          onClick={() => {
+            setIsDone(true);
+            if (onTracingCompleted) onTracingCompleted();
+          }}
+          className={`px-4 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 shadow transition-all ${
             isDone 
-              ? 'bg-emerald-600 hover:bg-emerald-700 text-white' 
-              : 'bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white hover:scale-105'
+              ? 'bg-emerald-600 text-white' 
+              : 'bg-gradient-to-r from-orange-600 to-amber-600 text-white hover:from-orange-700 hover:to-amber-700 hover:scale-105'
           }`}
         >
           <CheckCircle2 className="w-4 h-4" />
-          <span>{isDone ? '✓ ट्रेसिंग टास्क सत्यापित' : 'मैंने ट्रेसिंग पूरी कर ली (Complete Task)'}</span>
+          <span>{isDone ? '✓ अभ्यास पूर्ण हुआ!' : 'अभ्यास पूर्ण मार्क करें'}</span>
         </button>
       </div>
 

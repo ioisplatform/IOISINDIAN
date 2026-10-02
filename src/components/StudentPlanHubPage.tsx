@@ -112,7 +112,7 @@ export const StudentPlanHubPage: React.FC<StudentPlanHubPageProps> = ({
     return curriculum.curriculumPages.filter(p => p.subject === selectedSubject);
   }, [curriculum, selectedSubject]);
 
-  const activePage: CurriculumPage | undefined = filteredPages[currentPageIndex] || filteredPages[0];
+  const activePage: CurriculumPage | undefined = filteredPages[currentPageIndex] || filteredPages[0] || (curriculum.curriculumPages && curriculum.curriculumPages[0]);
 
   // Text to Speech
   const toggleSpeech = (text: string) => {
@@ -171,7 +171,7 @@ export const StudentPlanHubPage: React.FC<StudentPlanHubPageProps> = ({
   // Download notes
   const handleDownloadNotes = () => {
     if (!activePage) return;
-    const content = `IOIS DIGITAL EDUCATION NETWORK\nPLAN 0${plan.planNumber} - ${plan.name}\nविषय: ${activePage.subject} | स्तर: ${activePage.gradeOrLevel}\nशीर्षक: ${activePage.titleHindi} (${activePage.titleEnglish})\n\n[1] अवधारणा (Concept):\n${activePage.conceptOverview.hindi}\n${activePage.conceptOverview.english}\n\n[2] महत्वपूर्ण नियम एवं सूत्र:\n${activePage.keyFactsAndRules.join('\n• ')}\n\n[3] व्यावहारिक उदाहरण:\n${activePage.realWorldExamples.map(e => `• ${e.title}: ${e.description} (अनुप्रयोग: ${e.practicalApplication})`).join('\n')}\n\nछात्र: ${currentUser ? currentUser.name : 'IOIS Student'}\nतारीख: ${new Date().toLocaleDateString('hi-IN')}\nhttps://ioisplatform.github.io/`;
+    const content = `IOIS DIGITAL EDUCATION NETWORK\nPLAN 0${plan.planNumber} - ${plan.name}\nविषय: ${activePage.subject} | स्तर: ${activePage.gradeOrLevel}\nशीर्षक: ${activePage.titleHindi} (${activePage.titleEnglish})\n\n[1] अवधारणा (Concept):\n${activePage.conceptOverview.hindi}\n${activePage.conceptOverview.english}\n\n[2] महत्वपूर्ण नियम एवं सूत्र:\n${activePage.keyFactsAndRules.join('\n• ')}\n\n[3] व्यावहारिक उदाहरण:\n${(activePage.realWorldExamples || []).map(e => `• ${e?.title || ''}: ${e?.description || ''} (अनुप्रयोग: ${e?.practicalApplication || ''})`).join('\n')}\n\nछात्र: ${currentUser ? currentUser.name : 'IOIS Student'}\nतारीख: ${new Date().toLocaleDateString('hi-IN')}\nhttps://ioisplatform.github.io/`;
 
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -686,7 +686,7 @@ export const StudentPlanHubPage: React.FC<StudentPlanHubPageProps> = ({
                     >
                       <div className="space-y-1">
                         <span className="text-xs font-black text-emerald-400 block">
-                          {ex.title}
+                          {ex?.title || ''}
                         </span>
                         <p className="text-xs text-slate-300 leading-relaxed">
                           {ex.description}
@@ -760,7 +760,7 @@ export const StudentPlanHubPage: React.FC<StudentPlanHubPageProps> = ({
         )}
 
         {/* ========================================================================= */}
-        {/* TAB 2: VIDEO CLASSES (वीडियो कक्षाएं + Google Flow Video) */}
+        {/* TAB 2: VIDEO CLASSES (IOIS आधिकारिक वीडियो कक्षाएं) */}
         {/* ========================================================================= */}
         {activeTab === 'video' && (
           <div className="space-y-6 animate-in fade-in duration-200">

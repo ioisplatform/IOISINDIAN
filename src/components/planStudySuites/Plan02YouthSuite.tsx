@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ResumeBioDataBuilder } from '../ResumeBioDataBuilder';
 import { 
   FileText, 
   Sparkles, 
@@ -19,7 +20,7 @@ import {
 } from 'lucide-react';
 
 export const Plan02YouthSuite: React.FC = () => {
-  const [activeSubTab, setActiveSubTab] = useState<'resume' | 'prompts' | 'letters' | 'hrQuestions' | 'quiz'>('resume');
+  const [activeSubTab, setActiveSubTab] = useState<'builder' | 'resume' | 'prompts' | 'letters' | 'hrQuestions' | 'quiz'>('builder');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [promptSearch, setPromptSearch] = useState('');
   const [selectedPromptCategory, setSelectedPromptCategory] = useState<string>('all');
@@ -285,13 +286,23 @@ EXPERIENCE & CERTIFICATIONS
       {/* Sub Tabs Navigation */}
       <div className="flex flex-wrap items-center gap-2 bg-slate-950 p-2 rounded-2xl border border-slate-800 text-xs">
         <button
+          onClick={() => setActiveSubTab('builder')}
+          className={`flex items-center gap-1.5 px-4 py-2 rounded-xl font-black transition-all ${
+            activeSubTab === 'builder' ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-md scale-102' : 'text-amber-300 hover:text-white'
+          }`}
+        >
+          <Sparkles className="w-4 h-4 text-slate-950" />
+          <span>25 ATS रिज्यूम व बायो-डाटा बिल्डर (Live Builder)</span>
+        </button>
+
+        <button
           onClick={() => setActiveSubTab('resume')}
           className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-bold transition-all ${
             activeSubTab === 'resume' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
           }`}
         >
           <FileText className="w-4 h-4" />
-          <span>ATS रिज्यूम ब्लूप्रिंट</span>
+          <span>क्विक ब्लूप्रिंट्स</span>
         </button>
 
         <button
@@ -334,6 +345,13 @@ EXPERIENCE & CERTIFICATIONS
           <span>जॉब रेडीनेस टेस्ट</span>
         </button>
       </div>
+
+      {/* SUB-TAB 0: 25 ATS RESUME & BIO-DATA INTERACTIVE BUILDER */}
+      {activeSubTab === 'builder' && (
+        <div className="animate-in fade-in">
+          <ResumeBioDataBuilder />
+        </div>
+      )}
 
       {/* SUB-TAB 1: ATS RESUME BLUEPRINTS */}
       {activeSubTab === 'resume' && (

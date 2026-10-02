@@ -182,13 +182,23 @@ export const StudentHomeworkSystem: React.FC<StudentHomeworkSystemProps> = ({
   planName,
   onHomeworkCompleted
 }) => {
-  const homeworkList = PLAN_HOMEWORK_DATA[planId] || PLAN_HOMEWORK_DATA['plan-01'];
+  const homeworkList = PLAN_HOMEWORK_DATA[planId] || PLAN_HOMEWORK_DATA['plan-01'] || [];
   
   const [selectedHomework, setSelectedHomework] = useState<HomeworkAssignment>(homeworkList[0]);
   const [studentAnswer, setStudentAnswer] = useState('');
   const [submissions, setSubmissions] = useState<Record<string, { answer: string; submittedAt: string; status: 'checked'; marks: string; feedback: string }>>({});
   const [showGuide, setShowGuide] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Sync selectedHomework whenever planId changes
+  useEffect(() => {
+    const list = PLAN_HOMEWORK_DATA[planId] || PLAN_HOMEWORK_DATA['plan-01'] || [];
+    if (list.length > 0 && (!selectedHomework || !list.some(h => h.id === selectedHomework?.id))) {
+      setSelectedHomework(list[0]);
+    }
+  }, [planId]);
+
+  const activeHomework = selectedHomework || homeworkList[0];
 
   // Load submissions from localStorage
   useEffect(() => {
@@ -204,7 +214,7 @@ export const StudentHomeworkSystem: React.FC<StudentHomeworkSystemProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!studentAnswer.trim()) return;
+    if (!studentAnswer.trim() || !activeHomework) return;
 
     setIsSubmitting(true);
     setTimeout(() => {
@@ -213,11 +223,11 @@ export const StudentHomeworkSystem: React.FC<StudentHomeworkSystemProps> = ({
       
       const newSubmissions = {
         ...submissions,
-        [selectedHomework.id]: {
+        [activeHomework.id]: {
           answer: studentAnswer.trim(),
           submittedAt: timeStr,
           status: 'checked' as const,
-          marks: `${selectedHomework.stars}/${selectedHomework.stars} स्टार्स (100% अंक)`,
+          marks: `${activeHomework.stars}/${activeHomework.stars} स्टार्स (100% अंक)`,
           feedback: '✓ उत्कृष्ट कार्य! आपने सभी निर्देशों का सटीक पालन किया है। आपकी लिखावट और उत्तर की समझ सराहनीय है।'
         }
       };
@@ -238,7 +248,7 @@ export const StudentHomeworkSystem: React.FC<StudentHomeworkSystemProps> = ({
   };
 
   const completedCount = Object.keys(submissions).filter(id => homeworkList.some(h => h.id === id)).length;
-  const currentSubmission = submissions[selectedHomework.id];
+  const currentSubmission = activeHomework ? submissions[activeHomework.id] : undefined;
 
   return (
     <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-6">
@@ -340,23 +350,23 @@ export const StudentHomeworkSystem: React.FC<StudentHomeworkSystemProps> = ({
           <div className="space-y-2 border-b border-slate-200 pb-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="px-2.5 py-0.5 rounded text-[11px] font-black bg-emerald-100 text-emerald-900 border border-emerald-300">
-                {selectedHomework.subject}
+                {activeHomework?.subject || 'सामान्य विषय'}
               </span>
               <span className="text-xs text-slate-500 flex items-center gap-1 font-medium">
                 <Clock className="w-3.5 h-3.5 text-orange-500" />
-                <span>समय सीमा: {selectedHomework.deadline}</span>
+                <span>समय सीमा: {activeHomework?.deadline || 'आज शाम तक'}</span>
               </span>
             </div>
 
             <h4 className="text-base sm:text-lg font-black text-slate-900">
-              {selectedHomework.title}
+              {activeHomework?.title || 'दैनिक गृहकार्य'}
             </h4>
 
             {/* Step by step instructions */}
             <div className="bg-white p-3.5 rounded-2xl border border-slate-200 space-y-1.5 text-xs text-slate-700">
               <span className="font-bold text-slate-900 block">निर्देश (Instructions):</span>
               <ol className="list-decimal list-inside space-y-1 text-slate-600">
-                {selectedHomework.instructions.map((inst, i) => (
+                {(activeHomework?.instructions || []).map((inst, i) => (
                   <li key={i}>{inst}</li>
                 ))}
               </ol>

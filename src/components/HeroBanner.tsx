@@ -28,8 +28,6 @@ interface HeroBannerProps {
   onOpenStudyPage: (planId: string) => void;
 }
 
-const FLOW_GOOGLE_VIDEO_URL = 'https://flow.google.com/shared/video/52fc05e3-5a11-4930-9a32-34ea84151637';
-
 export const HeroBanner: React.FC<HeroBannerProps> = ({
   selectedCategory,
   onSelectCategory,
@@ -101,7 +99,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
               </div>
               <div>
                 <span className="text-[11px] font-black text-slate-900 block">वीडियो कक्षाएं</span>
-                <span className="text-[10px] text-slate-500 block">Google Flow Video</span>
+                <span className="text-[10px] text-slate-500 block">HD वीडियो पाठ</span>
               </div>
             </button>
 
@@ -135,15 +133,15 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
 
         </div>
 
-        {/* PROMINENT GOOGLE FLOW VIDEO SHOWCASE CARD */}
+        {/* PROMINENT OFFICIAL VIDEO SHOWCASE CARD */}
         <div className="mt-8 bg-gradient-to-r from-slate-950 via-slate-900 to-blue-950 text-white rounded-3xl p-5 sm:p-7 border border-slate-800 shadow-xl max-w-4xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             
             {/* Left: Video Info & Direct Watch Button */}
             <div className="space-y-3 text-center md:text-left">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs font-black border border-blue-400/30">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/20 text-red-300 text-xs font-black border border-red-400/30">
                 <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                <span>आधिकारिक वीडियो गाइड (Official Google Flow Video)</span>
+                <span>आधिकारिक वीडियो गाइड (IOIS Official Video Classroom)</span>
               </div>
 
               <h3 className="text-xl sm:text-2xl font-black text-white">
@@ -151,20 +149,17 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
               </h3>
 
               <p className="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
-                Google Flow पर साझा किया गया आधिकारिक वीडियो सेशन — जिसमें वर्णमाला उच्चारण, डिजिटल नोट्स, अक्षर ट्रेसिंग और होमवर्क करने की सरल विधि विस्तार से समझाई गई है।
+                IOIS का आधिकारिक सचित्र वीडियो सेशन — जिसमें वर्णमाला उच्चारण, डिजिटल नोट्स, अक्षर ट्रेसिंग और होमवर्क करने की सरल विधि विस्तार से समझाई गई है।
               </p>
 
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 pt-1">
-                <a
-                  href={FLOW_GOOGLE_VIDEO_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={() => onOpenStudyPage('plan-01')}
                   className="px-5 py-2.5 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 shadow-lg shadow-red-600/30 transition-transform hover:scale-105"
                 >
                   <Play className="w-4 h-4 fill-current" />
-                  <span>Google Flow वीडियो देखें</span>
-                  <ExternalLink className="w-3.5 h-3.5 ml-1" />
-                </a>
+                  <span>वीडियो क्लास देखें</span>
+                </button>
 
                 <button
                   onClick={() => onOpenStudyPage('plan-01')}
@@ -177,15 +172,13 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
             </div>
 
             {/* Right: Video Thumbnail Preview Box */}
-            <a
-              href={FLOW_GOOGLE_VIDEO_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="relative w-full md:w-72 aspect-video rounded-2xl overflow-hidden bg-slate-900 border-2 border-white/20 shadow-2xl group shrink-0 block"
+            <div
+              onClick={() => onOpenStudyPage('plan-01')}
+              className="relative w-full md:w-72 aspect-video rounded-2xl overflow-hidden bg-slate-900 border-2 border-white/20 shadow-2xl group shrink-0 cursor-pointer"
             >
               <img
                 src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=600&q=80"
-                alt="Google Flow Video Preview"
+                alt="IOIS Video Preview"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-80"
               />
               <div className="absolute inset-0 bg-slate-950/40 flex items-center justify-center">
@@ -196,7 +189,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
               <div className="absolute bottom-2 left-2 right-2 bg-slate-950/80 backdrop-blur-sm p-1.5 rounded-lg text-[10px] text-center font-mono text-slate-300">
                 12:45 Min • HD Video Class
               </div>
-            </a>
+            </div>
 
           </div>
         </div>

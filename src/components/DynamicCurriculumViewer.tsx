@@ -52,7 +52,7 @@ export const DynamicCurriculumViewer: React.FC<DynamicCurriculumViewerProps> = (
 
   // Ensure valid current page
   const safePageIndex = Math.min(currentPageIndex, Math.max(0, filteredPages.length - 1));
-  const activePage: CurriculumPage | undefined = filteredPages[safePageIndex];
+  const activePage: CurriculumPage | undefined = filteredPages[safePageIndex] || filteredPages[0] || (curriculum.curriculumPages && curriculum.curriculumPages[0]);
 
   const handleNextPage = () => {
     if (safePageIndex < filteredPages.length - 1) {
@@ -91,7 +91,7 @@ export const DynamicCurriculumViewer: React.FC<DynamicCurriculumViewerProps> = (
       <!DOCTYPE html>
       <html>
         <head>
-          <title>${activePage.titleHindi} - IOIS Study Hub</title>
+          <title>${activePage?.titleHindi || 'IOIS पाठ'} - IOIS Study Hub</title>
           <style>
             body { font-family: system-ui, -apple-system, sans-serif; padding: 30px; line-height: 1.6; color: #1e293b; }
             .header { border-bottom: 2px solid #ea580c; padding-bottom: 12px; margin-bottom: 20px; }
@@ -107,20 +107,20 @@ export const DynamicCurriculumViewer: React.FC<DynamicCurriculumViewerProps> = (
         <body>
           <div class="header">
             <span class="badge">IOIS DIGITAL CLASSROOM • PLAN 0${plan.planNumber}</span>
-            <h1>${activePage.titleHindi}</h1>
-            <p><strong>English:</strong> ${activePage.titleEnglish} | <strong>Level:</strong> ${activePage.gradeOrLevel} | <strong>Subject:</strong> ${activePage.subject}</p>
+            <h1>${activePage?.titleHindi || 'IOIS अध्ययन सामग्री'}</h1>
+            <p><strong>English:</strong> ${activePage?.titleEnglish || ''} | <strong>Level:</strong> ${activePage?.gradeOrLevel || ''} | <strong>Subject:</strong> ${activePage?.subject || ''}</p>
           </div>
 
           <h2>1. अवधारणा परिचय (Concept Overview)</h2>
-          <p>${activePage.conceptOverview.hindi}</p>
-          <p><em>${activePage.conceptOverview.english}</em></p>
+          <p>${activePage?.conceptOverview?.hindi || ''}</p>
+          <p><em>${activePage?.conceptOverview?.english || ''}</em></p>
 
           <h2>2. वास्तविक दुनिया के उदाहरण (Real-World Applications)</h2>
-          ${activePage.realWorldExamples.map(ex => `
+          ${(activePage?.realWorldExamples || []).map(ex => `
             <div class="example-box">
-              <strong>${ex.title}</strong>
-              <p>${ex.description}</p>
-              <p><em>व्यावहारिक उपयोग: ${ex.practicalApplication}</em></p>
+              <strong>${ex?.title || ''}</strong>
+              <p>${ex?.description || ''}</p>
+              <p><em>व्यावहारिक उपयोग: ${ex?.practicalApplication || ''}</em></p>
             </div>
           `).join('')}
 
@@ -478,7 +478,7 @@ export const DynamicCurriculumViewer: React.FC<DynamicCurriculumViewerProps> = (
                     {idx + 1}
                   </span>
                   <h5 className="font-extrabold text-xs sm:text-sm text-white">
-                    {ex.title}
+                    {ex?.title || ''}
                   </h5>
                 </div>
                 <p className="text-xs text-slate-300 leading-relaxed">

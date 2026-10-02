@@ -109,7 +109,7 @@ export const PlanComparisonMatrix: React.FC<PlanComparisonMatrixProps> = ({
                         {plan.kyaMilega.map((item, idx) => (
                           <li key={idx} className="flex items-start gap-1.5">
                             <span className="w-1.5 h-1.5 rounded-full bg-orange-500 mt-1.5 shrink-0" />
-                            <span><strong>{item.title}:</strong> {item.description}</span>
+                            <span><strong>{item?.title || ''}:</strong> {item?.description || ''}</span>
                           </li>
                         ))}
                       </ul>
