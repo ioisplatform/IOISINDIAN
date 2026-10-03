@@ -95,6 +95,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   const [showPlanPass, setShowPlanPass] = useState<Record<string, boolean>>({});
   const [newAdminKey, setNewAdminKey] = useState('');
   const [adminKeyMsg, setAdminKeyMsg] = useState('');
+  const [viewingImage, setViewingImage] = useState<{ title: string; url: string } | null>(null);
 
   // Load members on auth
   useEffect(() => {
@@ -609,15 +610,45 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                               </span>
                             </td>
 
-                            {/* Payment UTR */}
-                            <td className="p-3 whitespace-nowrap font-mono text-[11px]">
-                              {student.paymentRef ? (
-                                <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                                  {student.paymentRef}
-                                </span>
-                              ) : (
-                                <span className="text-slate-400 italic">नहीं दिया</span>
-                              )}
+                            {/* Payment UTR & Screenshot */}
+                            <td className="p-3 whitespace-nowrap text-[11px] space-y-1">
+                              <div>
+                                {student.paymentRef ? (
+                                  <span className="font-mono text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                    {student.paymentRef}
+                                  </span>
+                                ) : (
+                                  <span className="text-slate-400 italic">नहीं दिया</span>
+                                )}
+                              </div>
+                              <div className="flex flex-wrap items-center gap-1">
+                                {student.paymentScreenshotUrl && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setViewingImage({
+                                      title: `${student.name} - पेमेंट स्क्रीनशॉट (UTR: ${student.paymentRef || 'N/A'})`,
+                                      url: student.paymentScreenshotUrl!
+                                    })}
+                                    className="px-2 py-0.5 rounded bg-purple-100 hover:bg-purple-200 text-purple-900 font-bold text-[10px] inline-flex items-center gap-1 transition-colors cursor-pointer border border-purple-200"
+                                    title="स्क्रीनशॉट देखें"
+                                  >
+                                    <span>📷 स्क्रीनशॉट</span>
+                                  </button>
+                                )}
+                                {student.paymentAddressProofUrl && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setViewingImage({
+                                      title: `${student.name} - पता प्रमाण पत्र`,
+                                      url: student.paymentAddressProofUrl!
+                                    })}
+                                    className="px-2 py-0.5 rounded bg-blue-100 hover:bg-blue-200 text-blue-900 font-bold text-[10px] inline-flex items-center gap-1 transition-colors cursor-pointer border border-blue-200"
+                                    title="पता प्रमाण देखें"
+                                  >
+                                    <span>📄 पता प्रमाण</span>
+                                  </button>
+                                )}
+                              </div>
                             </td>
 
                             {/* Status */}
@@ -840,6 +871,63 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
 
               <div className="space-y-3 text-xs">
                 
+                {/* Uploaded Payment Screenshot & Verification Documents */}
+                <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                  <span className="font-bold text-slate-800 block">
+                    छात्र द्वारा अपलोड किया गया भुगतान स्क्रीनशॉट व प्रमाण:
+                  </span>
+                  <div className="flex flex-wrap items-center gap-3">
+                    {editingMember.paymentScreenshotUrl ? (
+                      <div className="flex items-center gap-2">
+                        <div 
+                          onClick={() => setViewingImage({
+                            title: `${editingMember.name} - पेमेंट स्क्रीनशॉट (UTR: ${editingMember.paymentRef || 'N/A'})`,
+                            url: editingMember.paymentScreenshotUrl!
+                          })}
+                          className="relative w-16 h-16 rounded-xl overflow-hidden border-2 border-purple-400 cursor-pointer hover:opacity-90 transition-opacity bg-slate-900 shrink-0"
+                          title="बड़ा करके देखें"
+                        >
+                          <img 
+                            src={editingMember.paymentScreenshotUrl} 
+                            alt="Payment Proof" 
+                            className="w-full h-full object-cover" 
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setViewingImage({
+                            title: `${editingMember.name} - पेमेंट स्क्रीनशॉट (UTR: ${editingMember.paymentRef || 'N/A'})`,
+                            url: editingMember.paymentScreenshotUrl!
+                          })}
+                          className="px-2.5 py-1.5 rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-900 font-bold text-xs cursor-pointer"
+                        >
+                          🔍 स्क्रीनशॉट बड़ा करें
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="text-slate-400 italic">कोई पेमेंट स्क्रीनशॉट अपलोड नहीं किया गया</span>
+                    )}
+
+                    {editingMember.paymentAddressProofUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setViewingImage({
+                          title: `${editingMember.name} - पता प्रमाण पत्र`,
+                          url: editingMember.paymentAddressProofUrl!
+                        })}
+                        className="px-2.5 py-1.5 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-900 font-bold text-xs cursor-pointer"
+                      >
+                        📄 पता प्रमाण देखें
+                      </button>
+                    )}
+                  </div>
+                  {editingMember.paymentRef && (
+                    <div className="text-[11px] font-mono text-emerald-800 font-bold">
+                      UTR No: {editingMember.paymentRef}
+                    </div>
+                  )}
+                </div>
+
                 {/* Plan Selection */}
                 <div>
                   <label className="font-bold text-slate-700 block mb-1">
@@ -1079,6 +1167,43 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Full-Screen Image Viewer Modal */}
+        {viewingImage && (
+          <div className="fixed inset-0 z-70 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
+            <div className="bg-slate-900 rounded-3xl overflow-hidden max-w-2xl w-full border-2 border-slate-700 shadow-2xl flex flex-col max-h-[90vh]">
+              <div className="p-4 bg-slate-950 text-white flex items-center justify-between border-b border-slate-800">
+                <div className="font-bold text-sm text-amber-300 truncate">
+                  {viewingImage.title}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setViewingImage(null)}
+                  className="p-1 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-4 overflow-auto flex-1 flex items-center justify-center bg-black/40">
+                <img
+                  src={viewingImage.url}
+                  alt="Uploaded Proof"
+                  className="max-w-full max-h-[70vh] object-contain rounded-xl shadow-lg border border-slate-800"
+                />
+              </div>
+              <div className="p-3 bg-slate-950 border-t border-slate-800 flex justify-between items-center text-xs text-slate-400">
+                <span>IOIS छात्र सत्यापन दस्तावेज</span>
+                <button
+                  type="button"
+                  onClick={() => setViewingImage(null)}
+                  className="px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold cursor-pointer"
+                >
+                  बंद करें (Close)
+                </button>
+              </div>
             </div>
           </div>
         )}

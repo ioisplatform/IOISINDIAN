@@ -82,6 +82,10 @@ export interface MemberProfile {
   role?: 'student' | 'admin';
   accessiblePlans: string[]; // List of plans kit user has authorization to access
   avatarUrl?: string;
+  customQrUrl?: string;
+  customQrImage?: string;
+  bloodGroup?: string;
+  emergencyPhone?: string;
   sponsorName?: string;
   sponsorId?: string;
   payoutUpi?: string;

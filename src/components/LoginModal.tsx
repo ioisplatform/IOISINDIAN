@@ -65,7 +65,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     setPendingNotice(null);
 
     if (!identifier.trim()) {
-      setError('कृपया अपना User ID (उदा. IOIS1001), मोबाइल नंबर या ईमेल दर्ज करें।');
+      setError('कृपया अपना User ID (उदा. IOIS10RK01), मोबाइल नंबर या ईमेल दर्ज करें।');
       return;
     }
 
@@ -184,7 +184,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   required
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
-                  placeholder="उदा. IOIS1001 या 8877490845"
+                  placeholder="उदा. IOIS10RK01 या 8877490845"
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-[#1e3a8a] outline-none text-xs bg-slate-50 font-mono font-bold"
                 />
               </div>

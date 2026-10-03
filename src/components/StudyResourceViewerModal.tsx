@@ -597,7 +597,7 @@ export const StudyResourceViewerModal: React.FC<StudyResourceViewerModalProps> =
     content += `संसाधन: ${activeResource?.title || 'IOIS अध्ययन किट'}\n`;
     content += `श्रेणी: ${activeResource.category} | साइज: ${activeResource.fileSize || '48.2 MB'}\n`;
     content += `अधिकृत सदस्य नाम: ${currentUser ? currentUser.name : 'विद्यार्थी सदस्य'}\n`;
-    content += `अधिकृत सदस्य ID: ${currentUser ? (currentUser.rollNumber || currentUser.memberId) : 'IOIS10VK01'}\n`;
+    content += `अधिकृत सदस्य ID: ${currentUser ? (currentUser.rollNumber || currentUser.memberId) : 'IOIS10RK01'}\n`;
     content += `सत्यापन तारीख: ${new Date().toLocaleDateString('hi-IN')}\n`;
     content += `आधिकारिक हेल्पलाइन: +91 8877490845 | IOIS सपोर्ट: ioisplatform@gmail.com\n`;
     content += `========================================================================\n\n`;

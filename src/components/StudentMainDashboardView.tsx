@@ -238,7 +238,23 @@ export const StudentMainDashboardView: React.FC<StudentMainDashboardViewProps> =
               </div>
 
               <div className="flex items-center gap-2 pt-0.5 text-[11px] text-slate-600 flex-wrap">
-                <span>रोल नंबर: <strong className="text-[#1e3a8a] font-mono bg-blue-100/80 px-2 py-0.5 rounded border border-blue-300">{currentUser.rollNumber || currentUser.memberId}</strong></span>
+                <span className="flex items-center gap-1.5">
+                  रोल नंबर: 
+                  <strong className="text-[#1e3a8a] font-mono bg-blue-100/80 px-2 py-0.5 rounded border border-blue-300">
+                    {currentUser.rollNumber || currentUser.memberId}
+                  </strong>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(currentUser.rollNumber || currentUser.memberId);
+                      alert('User ID कॉपी हो गई!');
+                    }}
+                    title="User ID कॉपी करें"
+                    className="px-2 py-0.5 rounded bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-[10px] cursor-pointer"
+                  >
+                    कॉपी
+                  </button>
+                </span>
                 <span>•</span>
                 <span>कक्षा: <strong className="text-slate-800">{currentUser.designation || 'Class 1-12'}</strong></span>
                 <span>•</span>

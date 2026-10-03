@@ -39,43 +39,124 @@ export const saveMembersLocally = (members: MemberProfile[]) => {
 };
 
 // -------------------------------------------------------------
-// SHORT, CRISP & MEMORABLE USER ID / ROLL NUMBER GENERATOR
-// e.g. IOIS1001 (IOIS + Plan 10 + 01) - Only 8 characters, No symbols!
+// UNIQUE, NON-EDITABLE STUDENT USER ID / ROLL NUMBER GENERATOR
+// Formula: IOIS + [Plan Tag: 10] + [Initials: RK for Rahul Kumar / राहुल कुमार] + [Serial: 01 for first member]
+// e.g. IOIS10RK01 (IOIS + 10 Plan + RK Rahul Kumar + 01 First Member of Plan 10)
 // -------------------------------------------------------------
-export const generatePlanRollNumber = (
-  planId: string, 
-  currentTotal: number = 0,
+const devanagariToLatin: Record<string, string> = {
+  'अ': 'A', 'आ': 'A', 'इ': 'I', 'ई': 'I', 'उ': 'U', 'ऊ': 'U', 'ऋ': 'R', 'ए': 'E', 'ऐ': 'A', 'ओ': 'O', 'औ': 'A',
+  'क': 'K', 'ख': 'K', 'ग': 'G', 'घ': 'G', 'ङ': 'N',
+  'च': 'C', 'छ': 'C', 'ज': 'J', 'झ': 'J', 'ञ': 'N',
+  'ट': 'T', 'ठ': 'T', 'ड': 'D', 'ढ': 'D', 'ण': 'N',
+  'त': 'T', 'थ': 'T', 'द': 'D', 'ध': 'D', 'न': 'N',
+  'प': 'P', 'फ': 'P', 'ब': 'B', 'भ': 'B', 'म': 'M',
+  'य': 'Y', 'र': 'R', 'ल': 'L', 'व': 'V', 'श': 'S', 'ष': 'S', 'स': 'S', 'ह': 'H'
+};
+
+const getFirstCharLatin = (word: string): string => {
+  if (!word) return '';
+  const first = word[0];
+  if (/[A-Za-z]/.test(first)) return first.toUpperCase();
+  if (devanagariToLatin[first]) return devanagariToLatin[first];
+  return '';
+};
+
+export const extractNameInitials = (name: string): string => {
+  if (!name || !name.trim()) return 'RK';
+  const clean = name.trim();
+  const words = clean.split(/\s+/).filter(Boolean);
+  
+  if (words.length >= 2) {
+    const c1 = getFirstCharLatin(words[0]) || 'R';
+    const c2 = getFirstCharLatin(words[1]) || 'K';
+    return `${c1}${c2}`;
+  } else if (words.length === 1) {
+    const word = words[0];
+    const c1 = getFirstCharLatin(word) || 'R';
+    // If English word has 2+ characters
+    if (word.length >= 2 && /[A-Za-z]/.test(word[1])) {
+      return `${c1}${word[1].toUpperCase()}`;
+    }
+    // If Devanagari word has 2nd character
+    if (word.length >= 2 && devanagariToLatin[word[1]]) {
+      return `${c1}${devanagariToLatin[word[1]]}`;
+    }
+    return `${c1}K`;
+  }
+  return 'RK';
+};
+
+export const generateUniqueStudentId = (
+  name: string = 'राहुल कुमार',
+  planId: string = 'plan-01',
   allMembers?: MemberProfile[]
 ): string => {
-  const planPriceMap: Record<string, string> = {
+  const planTagMap: Record<string, string> = {
     'plan-01': '10',
+    '1': '10',
+    '01': '10',
+    'plan-1': '10',
+    '10': '10',
     'plan-02': '49',
+    '2': '49',
+    '02': '49',
+    'plan-2': '49',
+    '49': '49',
     'plan-03': '99',
+    '3': '99',
+    '03': '99',
+    'plan-3': '99',
+    '99': '99',
     'plan-04': '199',
+    '4': '199',
+    '04': '199',
+    'plan-4': '199',
+    '199': '199',
     'plan-05': '299',
+    '5': '299',
+    '05': '299',
+    'plan-5': '299',
+    '299': '299',
     'plan-06': '499',
+    '6': '499',
+    '06': '499',
+    'plan-6': '499',
+    '499': '499',
     'plan-07': '999',
+    '7': '999',
+    '07': '999',
+    'plan-7': '999',
+    '999': '999',
   };
-  const planTag = planPriceMap[planId] || '10';
+  const planTag = planTagMap[planId] || '10';
+  const initials = extractNameInitials(name);
 
   const members = allMembers || getStoredMembers();
-  const existingForPlan = members.filter(m => 
-    (m.rollNumber && m.rollNumber.startsWith(`IOIS${planTag}`)) ||
-    (m.memberId && m.memberId.startsWith(`IOIS${planTag}`))
-  );
-
-  let seq = Math.max(existingForPlan.length + 1, currentTotal + 1);
+  
+  // Count existing members enrolled in this specific plan
+  const planMembers = members.filter(m => m.planId === planId);
+  let seq = planMembers.length + 1;
   let seqStr = seq < 10 ? `0${seq}` : `${seq}`;
-  let candidate = `IOIS${planTag}${seqStr}`;
+  let candidate = `IOIS${planTag}${initials}${seqStr}`;
 
-  // Ensure absolute uniqueness
-  while (members.some(m => m.rollNumber === candidate || m.memberId === candidate)) {
+  // Ensure absolute uniqueness across all members in system
+  while (members.some(m => m.memberId === candidate || m.rollNumber === candidate)) {
     seq++;
     seqStr = seq < 10 ? `0${seq}` : `${seq}`;
-    candidate = `IOIS${planTag}${seqStr}`;
+    candidate = `IOIS${planTag}${initials}${seqStr}`;
   }
 
   return candidate;
+};
+
+// Alias for backward compatibility across existing calls
+export const generatePlanRollNumber = (
+  planId: string, 
+  currentTotal: number = 0,
+  allMembers?: MemberProfile[],
+  name: string = 'Student'
+): string => {
+  return generateUniqueStudentId(name, planId, allMembers);
 };
 
 // -------------------------------------------------------------
@@ -194,9 +275,9 @@ export const registerStudentToDatabase = async (
     }
   }
 
-  // Generate Non-editable, Short, Symbol-free Memorable Roll Number & User ID
-  // e.g. IOIS1001 (IOIS + Plan 10 + 01)
-  const rollNumber = generatePlanRollNumber(input.planId, 0, allMembers);
+  // Generate Non-editable, Permanent Unique Student ID / Roll Number
+  // Format: IOIS + Plan (10) + Initials (RK) + Serial (01) -> e.g. IOIS10RK01
+  const rollNumber = generateUniqueStudentId(input.name, input.planId, allMembers);
   
   // Unique Member ID
   const memberId = rollNumber;
@@ -219,7 +300,7 @@ export const registerStudentToDatabase = async (
     address: input.address?.trim() || '',
     grade: input.grade || 'Primary / General',
     memberId: memberId,
-    rollNumber: rollNumber, // STRICTLY NON-EDITABLE & SYMBOL-FREE (e.g. IOIS1001)
+    rollNumber: rollNumber, // STRICTLY NON-EDITABLE & SYMBOL-FREE (e.g. IOIS10RK01)
     planId: input.planId,
     planName: input.planName,
     amountPaid: input.amountPaid,
@@ -277,7 +358,7 @@ export const authenticateStudent = async (
   if (!matched) {
     return {
       success: false,
-      message: 'विद्यार्थी खाता नहीं मिला! कृपया अपना User ID (उदा. IOIS1001), पंजीकृत मोबाइल नंबर या ईमेल सही दर्ज करें।'
+      message: 'विद्यार्थी खाता नहीं मिला! कृपया अपना User ID (उदा. IOIS10RK01), पंजीकृत मोबाइल नंबर या ईमेल सही दर्ज करें।'
     };
   }
 
@@ -516,6 +597,53 @@ export const setCurrentSessionUser = (user: MemberProfile | null) => {
   } catch (e) {
     console.warn('Session write error:', e);
   }
+};
+
+// -------------------------------------------------------------
+// USER PROFILE UPDATE (USER CAN EDIT ALL DETAILS EXCEPT USER ID)
+// User ID & Plan are permanent / non-editable
+// -------------------------------------------------------------
+export const updateStudentProfile = async (
+  memberId: string,
+  updates: Partial<MemberProfile>
+): Promise<MemberProfile | null> => {
+  const members = getStoredMembers();
+  const idx = members.findIndex(m => m.memberId === memberId || m.rollNumber === memberId);
+  if (idx === -1) return null;
+
+  // Protect non-editable fields!
+  // USER APNE ID CARD PAR USER ID KE ALWA SAB EDIT KAR SAKE
+  const protectedFields = ['memberId', 'rollNumber', 'planId', 'amountPaid'];
+  const sanitizedUpdates: Partial<MemberProfile> = {};
+  
+  for (const key of Object.keys(updates) as (keyof MemberProfile)[]) {
+    if (!protectedFields.includes(key)) {
+      (sanitizedUpdates as any)[key] = updates[key];
+    }
+  }
+
+  const updatedUser: MemberProfile = {
+    ...members[idx],
+    ...sanitizedUpdates
+  };
+
+  members[idx] = updatedUser;
+  saveMembersLocally(members);
+
+  // Sync to Firestore
+  try {
+    await syncUserToFirestore(updatedUser);
+  } catch (err) {
+    console.warn('Firestore update warning:', err);
+  }
+
+  // If current session is this user, update active session
+  const current = getCurrentSessionUser();
+  if (current && (current.memberId === memberId || current.rollNumber === memberId)) {
+    setCurrentSessionUser(updatedUser);
+  }
+
+  return updatedUser;
 };
 
 // -------------------------------------------------------------

@@ -1,7 +1,7 @@
 import React, { useState, useId } from 'react';
 import { ioisMasterPlans } from '../data/ioisPlansData';
 import { PlanDetail, MemberProfile } from '../types';
-import { registerStudentToDatabase, generatePlanRollNumber } from '../services/userService';
+import { registerStudentToDatabase, generateUniqueStudentId, extractNameInitials } from '../services/userService';
 import { 
   X, 
   CheckCircle2, 
@@ -87,9 +87,9 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
   const upiIntentString = `upi://pay?pa=8877490845@spicepay&pn=IOIS%20PLATFORM&am=${currentPlan.price}&cu=INR&tn=IOIS%20Plan0${currentPlan.planNumber}%20Verification`;
   const upiQrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&margin=8&data=${encodeURIComponent(upiIntentString)}`;
 
-  // Auto-calculated Short, Crisp & Memorable Roll Number / User ID
-  // e.g. IOIS1001 (IOIS + Plan 10 + 01) - Only 8 characters, No symbols!
-  const rollNumberPreview = generatePlanRollNumber(currentPlan.id, 0);
+  // Auto-calculated Permanent, Unique, Non-editable Student ID (e.g. IOIS10RK01)
+  // Format: IOIS + Plan (10) + Initials (RK) + Serial (01)
+  const rollNumberPreview = generateUniqueStudentId(fullName || 'विद्यार्थी', currentPlan.id);
 
   // Password strength calculation
   const getPasswordStrength = (pass: string) => {
@@ -540,20 +540,16 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                 </div>
                 <div className="relative">
                   <input
-                    type={showPassword ? 'text' : 'password'}
+                    type="password"
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="कम से कम 8 अक्षरों का पासवर्ड"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-[#1e3a8a] outline-none bg-white pr-10 font-mono"
+                    placeholder="••••••••••••"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-[#1e3a8a] outline-none bg-white pr-10 font-mono tracking-widest"
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-700"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
+                  <div className="absolute right-3 top-2.5 text-slate-400">
+                    <Lock className="w-4 h-4" />
+                  </div>
                 </div>
               </div>
 
@@ -589,13 +585,13 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
 
                 <div>
                   <label className="font-bold text-slate-700 block mb-1">
-                    Sponsor ID (उदा. IOIS1001)
+                    Sponsor ID (उदा. IOIS10RK01)
                   </label>
                   <input
                     type="text"
                     value={sponsorId}
                     onChange={(e) => setSponsorId(e.target.value)}
-                    placeholder="उदा. IOIS1001"
+                    placeholder="उदा. IOIS10RK01"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 outline-none bg-white font-mono uppercase"
                   />
                 </div>

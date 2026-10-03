@@ -16,17 +16,29 @@ import {
 } from 'lucide-react';
 
 interface MembershipPlansSectionProps {
-  onJoinPlan: (planId: string) => void;
+  currentUser?: any;
+  onJoinPlan?: (planId: string) => void;
+  onSelectPlan?: (plan: any) => void;
   onOpenStudyPage: (planId: string) => void;
-  onOpenAiAdvisor: () => void;
+  onOpenAiAdvisor?: () => void;
 }
 
 export const MembershipPlansSection: React.FC<MembershipPlansSectionProps> = ({
+  currentUser,
   onJoinPlan,
+  onSelectPlan,
   onOpenStudyPage,
   onOpenAiAdvisor
 }) => {
   const [showAllPlans, setShowAllPlans] = useState(false);
+
+  const handleJoin = (planId: string) => {
+    if (onJoinPlan) {
+      onJoinPlan(planId);
+    } else if (onSelectPlan) {
+      onSelectPlan({ id: planId });
+    }
+  };
 
   // The 3 core featured plans requested specifically by the user
   const corePlans = [
@@ -173,7 +185,7 @@ export const MembershipPlansSection: React.FC<MembershipPlansSectionProps> = ({
                 {/* BOTTOM ACTION BUTTONS */}
                 <div className="pt-6 space-y-2.5">
                   <button
-                    onClick={() => onJoinPlan(plan.id)}
+                    onClick={() => handleJoin(plan.id)}
                     className={`w-full py-3.5 px-4 font-black text-sm rounded-2xl shadow-md flex items-center justify-center gap-2 transition-all active:scale-95 ${
                       isPopular
                         ? 'bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-orange-600/30 hover:scale-105'

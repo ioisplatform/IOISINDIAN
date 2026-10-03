@@ -689,6 +689,32 @@ export const UserDashboardModal: React.FC<UserDashboardModalProps> = ({
         {activeTab === 'profile' && (
           <form onSubmit={handleSaveProfile} className="p-6 overflow-y-auto space-y-4">
             
+            {/* Permanent Non-Editable User ID Box */}
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2">
+                <Lock className="w-4 h-4 text-blue-700 shrink-0" />
+                <div>
+                  <span className="font-bold text-[#1e3a8a] block">
+                    स्थायी छात्र User ID: <span className="font-mono font-black text-amber-700">{currentUser.rollNumber || currentUser.memberId}</span>
+                  </span>
+                  <span className="text-[10px] text-slate-500">
+                    सुरक्षा एवं सत्यापन हेतु यह यूजर आईडी गैर-संपादन योग्य है।
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(currentUser.rollNumber || currentUser.memberId);
+                  setCopiedLink(true);
+                  setTimeout(() => setCopiedLink(false), 2000);
+                }}
+                className="px-2.5 py-1 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-[10px] transition-colors shrink-0"
+              >
+                {copiedLink ? 'कॉपी हुआ!' : 'कॉपी ID'}
+              </button>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               
               <div className="space-y-1">

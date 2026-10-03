@@ -106,7 +106,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs sm:text-sm font-black text-slate-900">
-                    {currentUser ? `नमस्ते, ${currentUser.fullName}!` : 'नमस्ते, प्रिय विद्यार्थी!'}
+                    {currentUser ? `नमस्ते, ${currentUser.name}!` : 'नमस्ते, प्रिय विद्यार्थी!'}
                   </span>
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
@@ -115,7 +115,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 </div>
                 <p className="text-[11px] text-slate-500 font-medium">
                   {currentUser 
-                    ? `रोल नंबर: ${currentUser.rollNumber} • प्लान: Plan 0${currentUser.planNumber}` 
+                    ? `रोल नंबर: ${currentUser.rollNumber || currentUser.memberId} • प्लान: ${currentUser.planName || 'Plan 01'}` 
                     : 'IOIS INDIA राष्ट्रीय डिजिटल छात्र सेवा केंद्र • कक्षा 1 से 12 एवं 7 मास्टर योजनाएं'}
                 </p>
               </div>
@@ -132,32 +132,13 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 <span>हेल्पलाइन: +91 8877490845</span>
               </a>
 
-              {/* Vidyarthi Panjikaran Button */}
-              {!currentUser && onOpenRegistration && (
-                <button
-                  onClick={() => onOpenRegistration('plan-01')}
-                  className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:brightness-105 text-slate-950 font-black flex items-center gap-1.5 border border-amber-300 shadow-2xs transition-all"
-                >
-                  <UserCheck className="w-3.5 h-3.5 text-slate-950" />
-                  <span>विद्यार्थी पंजीकरण</span>
-                </button>
-              )}
-
-              {currentUser ? (
+              {currentUser && (
                 <button
                   onClick={onOpenIdCardModal}
                   className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold flex items-center gap-1.5 border border-slate-200 transition-colors"
                 >
                   <CreditCard className="w-3.5 h-3.5 text-[#991b1b]" />
                   <span>आईडी कार्ड</span>
-                </button>
-              ) : (
-                <button
-                  onClick={onOpenLoginModal}
-                  className="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-900 font-bold flex items-center gap-1.5 border border-blue-200 transition-colors"
-                >
-                  <LogIn className="w-3.5 h-3.5 text-blue-700" />
-                  <span>लॉगिन</span>
                 </button>
               )}
             </div>
@@ -213,7 +194,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   </div>
 
                   <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight leading-tight">
-                    डिजिटल छात्र सेवा केंद्र — <span className="text-amber-300 underline decoration-amber-400/60 decoration-wavy decoration-2">सभी अध्ययन सामग्री एक ही पास में!</span>
+                    डिजिटल छात्र सेवा केंद्र — <span className="text-amber-300 underline decoration-amber-400/60 decoration-wavy decoration-2">सभी अध्ययन सामग्री एक ही क्लिक में!</span>
                   </h1>
 
                   <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-normal">
@@ -239,16 +220,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                         <Sparkles className="w-4 h-4 text-slate-950" />
                         <span>सत्यापित छात्र पास प्राप्त करें (@ मात्र ₹10)</span>
                         <ArrowRight className="w-4 h-4 text-slate-950" />
-                      </button>
-                    )}
-
-                    {!currentUser && onOpenRegistration && (
-                      <button
-                        onClick={() => onOpenRegistration('plan-01')}
-                        className="w-full sm:w-auto px-5 py-3.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm rounded-2xl border border-white/25 shadow-xs flex items-center justify-center gap-2 transition-all hover:scale-[1.02] cursor-pointer"
-                      >
-                        <UserCheck className="w-4 h-4 text-amber-300" />
-                        <span>विद्यार्थी पंजीकरण (रजिस्ट्रेशन)</span>
                       </button>
                     )}
 
@@ -298,7 +269,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                             DIGITAL STUDENT PASS
                           </span>
                           <span className="text-[10px] text-amber-300 font-semibold">
-                            {currentUser ? `Verified Member: ${currentUser.fullName}` : 'IOIS INDIA Verified Student Pass'}
+                            {currentUser ? `Verified Member: ${currentUser.name}` : 'IOIS INDIA Verified Student Pass'}
                           </span>
                         </div>
                       </div>
@@ -637,42 +608,23 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 </a>
               )}
 
-              {/* 12. Student Registration / Login */}
-              {!currentUser ? (
-                <button
-                  onClick={() => onOpenRegistration && onOpenRegistration('plan-01')}
-                  className="p-3.5 rounded-3xl bg-white hover:bg-amber-50/80 border border-slate-200 hover:border-amber-400 transition-all flex flex-col items-center text-center space-y-2 group shadow-2xs hover:shadow-md cursor-pointer"
-                >
-                  <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-amber-500 to-orange-500 text-slate-950 flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm">
-                    <UserCheck className="w-6 h-6 text-slate-950" />
-                  </div>
-                  <div>
-                    <span className="font-black text-xs text-slate-900 block group-hover:text-amber-800 transition-colors">
-                      छात्र पंजीकरण
-                    </span>
-                    <span className="text-[10px] text-slate-500 font-medium block mt-0.5">
-                      नया खाता बनाएं
-                    </span>
-                  </div>
-                </button>
-              ) : (
-                <button
-                  onClick={onOpenIdCardModal}
-                  className="p-3.5 rounded-3xl bg-white hover:bg-slate-100 border border-slate-200 hover:border-slate-400 transition-all flex flex-col items-center text-center space-y-2 group shadow-2xs hover:shadow-md cursor-pointer"
-                >
-                  <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#1e3a8a] to-slate-900 text-white flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm">
-                    <UserCheck className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <span className="font-black text-xs text-slate-900 block group-hover:text-blue-800 transition-colors">
-                      मेरा खाता
-                    </span>
-                    <span className="text-[10px] text-slate-500 font-medium block mt-0.5">
-                      सक्रिय प्रोफाइल
-                    </span>
-                  </div>
-                </button>
-              )}
+              {/* 12. Digital Student ID Card Service */}
+              <button
+                onClick={onOpenIdCardModal}
+                className="p-3.5 rounded-3xl bg-white hover:bg-slate-100 border border-slate-200 hover:border-slate-400 transition-all flex flex-col items-center text-center space-y-2 group shadow-2xs hover:shadow-md cursor-pointer"
+              >
+                <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#1e3a8a] to-slate-900 text-white flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm">
+                  <CreditCard className="w-6 h-6 text-amber-300" />
+                </div>
+                <div>
+                  <span className="font-black text-xs text-slate-900 block group-hover:text-blue-800 transition-colors">
+                    डिजिटल छात्र ID कार्ड
+                  </span>
+                  <span className="text-[10px] text-slate-500 font-medium block mt-0.5">
+                    पहचान पत्र देखें
+                  </span>
+                </div>
+              </button>
 
             </div>
           </div>
