@@ -154,10 +154,10 @@ export const ClassSelectionGrid: React.FC<ClassSelectionGridProps> = ({
 
             <div className="pt-5 space-y-2">
               <button
-                onClick={() => onOpenStudyPage('plan-01')}
-                className="w-full py-3 px-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-xs rounded-2xl shadow-md flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+                onClick={() => onOpenStudyPage('plan-03')}
+                className="w-full py-3 px-3 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-xs rounded-2xl shadow-md flex items-center justify-center gap-1.5 active:scale-95 transition-all"
               >
-                <span>NEET / JEE प्रश्न बैंक खोलें</span>
+                <span>🎯 Competition Ready मॉक खोलें</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
 

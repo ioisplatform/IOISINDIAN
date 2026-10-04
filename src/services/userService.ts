@@ -230,6 +230,9 @@ export interface RegisterInput {
   paymentScreenshotUrl?: string;
   paymentAddressProofUrl?: string;
   password?: string;
+  avatarUrl?: string;
+  customQrUrl?: string;
+  customQrImage?: string;
 }
 
 export const registerStudentToDatabase = async (
@@ -998,7 +1001,11 @@ export const updateMemberProfile = (
     email: updates.email !== undefined ? updates.email.trim() : existing.email,
     city: updates.city ? updates.city.trim() : existing.city,
     state: updates.state ? updates.state.trim() : existing.state,
-    designation: updates.designation || existing.designation
+    designation: updates.designation || existing.designation,
+    address: updates.address !== undefined ? updates.address : existing.address,
+    avatarUrl: updates.avatarUrl !== undefined ? updates.avatarUrl : existing.avatarUrl,
+    customQrUrl: updates.customQrUrl !== undefined ? updates.customQrUrl : existing.customQrUrl,
+    customQrImage: updates.customQrImage !== undefined ? updates.customQrImage : existing.customQrImage
   };
 
   members[index] = updatedUser;

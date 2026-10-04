@@ -13,11 +13,13 @@ import {
   CheckCircle2, 
   GraduationCap,
   Layers,
-  ArrowRight
+  ArrowRight,
+  Flame
 } from 'lucide-react';
+import { CompetitionReadyPracticeZone } from '../CompetitionReadyPracticeZone';
 
 export const Plan03CareerSuite: React.FC = () => {
-  const [activeSubTab, setActiveSubTab] = useState<'ncert' | 'careerPaths' | 'softSkills' | 'boardStrategy' | 'quiz'>('ncert');
+  const [activeSubTab, setActiveSubTab] = useState<'ncert' | 'careerPaths' | 'softSkills' | 'boardStrategy' | 'quiz' | 'competition'>('ncert');
   const [selectedSubject, setSelectedSubject] = useState<'science' | 'math' | 'social' | 'english'>('science');
   const [selectedStream, setSelectedStream] = useState<'science' | 'commerce' | 'arts' | 'defense'>('science');
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -333,11 +335,43 @@ export const Plan03CareerSuite: React.FC = () => {
           <Award className="w-4 h-4" />
           <span>अकादमिक टेस्ट</span>
         </button>
+
+        <button
+          onClick={() => setActiveSubTab('competition')}
+          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-black transition-all ${
+            activeSubTab === 'competition'
+              ? 'bg-gradient-to-r from-red-600 via-orange-600 to-amber-500 text-white shadow-lg ring-2 ring-orange-400/40'
+              : 'text-amber-400 hover:text-white hover:bg-slate-900 border border-amber-500/30'
+          }`}
+        >
+          <Flame className="w-4 h-4 text-orange-400 fill-orange-400 animate-pulse" />
+          <span>🎯 Competition Ready (NEET/JEE 7-12)</span>
+        </button>
       </div>
 
       {/* SUB-TAB 1: NCERT 6-12 QUICK NOTES */}
       {activeSubTab === 'ncert' && (
         <div className="space-y-4 animate-in fade-in">
+          {/* Quick Competition Callout Banner */}
+          <div className="p-4 rounded-2xl bg-gradient-to-r from-red-950/70 via-slate-950 to-indigo-950 border border-orange-500/40 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-3">
+              <span className="w-9 h-9 rounded-xl bg-orange-600/30 border border-orange-500/40 text-orange-400 flex items-center justify-center shrink-0">
+                <Flame className="w-5 h-5 fill-orange-400 animate-pulse" />
+              </span>
+              <div>
+                <strong className="text-white font-black block text-sm">कक्षा 7 से 12 NEET & JEE Mains रैंडमाइज्ड मॉक प्रैक्टिस</strong>
+                <span className="text-slate-300">हर बार नया प्रश्न पत्र, NTA मार्किंग (+4 / -1), टाइमर व लाइन-दर-लाइन NCERT सच।</span>
+              </div>
+            </div>
+            <button
+              onClick={() => setActiveSubTab('competition')}
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-slate-950 font-black shadow flex items-center gap-1.5 transition-all"
+            >
+              <span>🎯 Competition Ready खोलें</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
           {/* Subject Pills */}
           <div className="flex items-center gap-2 bg-slate-950 p-2 rounded-2xl border border-slate-800 text-xs overflow-x-auto">
             {(['science', 'math', 'social', 'english'] as const).map((sub) => (
@@ -593,6 +627,13 @@ export const Plan03CareerSuite: React.FC = () => {
               </button>
             )}
           </div>
+        </div>
+      )}
+
+      {/* SUB-TAB 6: 🎯 COMPETITION READY (CLASSES 7-12 NEET/JEE PRACTICE ZONE) */}
+      {activeSubTab === 'competition' && (
+        <div className="space-y-4 animate-in fade-in">
+          <CompetitionReadyPracticeZone initialClass={11} />
         </div>
       )}
 

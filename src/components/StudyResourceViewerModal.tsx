@@ -8,6 +8,7 @@ import { Plan04FamilySuite } from './planStudySuites/Plan04FamilySuite';
 import { Plan05EliteSuite } from './planStudySuites/Plan05EliteSuite';
 import { Plan06AgencySuite } from './planStudySuites/Plan06AgencySuite';
 import { Plan07MasterSuite } from './planStudySuites/Plan07MasterSuite';
+import { CompetitionReadyPracticeZone } from './CompetitionReadyPracticeZone';
 import { 
   X, 
   Download, 
@@ -37,6 +38,8 @@ import {
   Maximize2,
   ShieldCheck,
   Zap,
+  Flame,
+  Target,
   Image as ImageIcon
 } from 'lucide-react';
 
@@ -345,6 +348,8 @@ interface StudyResourceViewerModalProps {
   currentUser: MemberProfile | null;
   onOpenLogin?: () => void;
   onOpenRegistration?: (planId: string) => void;
+  initialTab?: 'reader' | 'chapters' | 'download' | 'competition';
+  initialClass?: number;
 }
 
 export const StudyResourceViewerModal: React.FC<StudyResourceViewerModalProps> = ({
@@ -354,10 +359,16 @@ export const StudyResourceViewerModal: React.FC<StudyResourceViewerModalProps> =
   plan,
   currentUser,
   onOpenLogin,
-  onOpenRegistration
+  onOpenRegistration,
+  initialTab,
+  initialClass
 }) => {
-  const [selectedTab, setSelectedTab] = useState<'reader' | 'chapters' | 'download'>('reader');
-  const [selectedClass, setSelectedClass] = useState<number>(1);
+  const [selectedTab, setSelectedTab] = useState<'reader' | 'chapters' | 'download' | 'competition'>(
+    initialTab || (plan.planNumber === 3 ? 'competition' : 'reader')
+  );
+  const [selectedClass, setSelectedClass] = useState<number>(
+    initialClass || (plan.planNumber === 3 ? 11 : 1)
+  );
   const [downloadSuccess, setDownloadSuccess] = useState(false);
   const [copiedText, setCopiedText] = useState(false);
   const [enlargedPage, setEnlargedPage] = useState<BalVikasPrintablePage | null>(null);
@@ -961,6 +972,22 @@ export const StudyResourceViewerModal: React.FC<StudyResourceViewerModalProps> =
             >
               प्रिंट व ऑफलाइन किट
             </button>
+
+            {/* 4. Competition Ready Practice Zone (Class 7-12 NEET & JEE) */}
+            <button
+              onClick={() => setSelectedTab('competition')}
+              className={`px-3.5 py-1.5 rounded-lg font-black transition-all flex items-center gap-1.5 ${
+                selectedTab === 'competition'
+                  ? 'bg-gradient-to-r from-red-600 via-orange-600 to-amber-500 text-white shadow-lg ring-2 ring-orange-400/40'
+                  : 'text-amber-400 hover:text-white hover:bg-slate-800'
+              }`}
+            >
+              <Flame className="w-3.5 h-3.5 text-orange-400 fill-orange-400 animate-pulse" />
+              <span>🎯 Competition Ready (7-12th)</span>
+              <span className="hidden md:inline px-1.5 py-0.2 rounded-full bg-red-500/20 text-red-300 text-[9px] border border-red-500/40 font-bold">
+                NEET/JEE
+              </span>
+            </button>
           </div>
 
           <div className="flex items-center gap-2">
@@ -1477,6 +1504,13 @@ export const StudyResourceViewerModal: React.FC<StudyResourceViewerModalProps> =
                 </div>
               )}
 
+            </div>
+          )}
+
+          {/* TAB 4: 🎯 COMPETITION READY (CLASSES 7-12 RANDOMIZED NEET/JEE PRACTICE ZONE) */}
+          {selectedTab === 'competition' && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              <CompetitionReadyPracticeZone initialClass={selectedClass >= 7 ? selectedClass : 11} />
             </div>
           )}
 
