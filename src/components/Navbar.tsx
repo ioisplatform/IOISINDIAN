@@ -172,13 +172,22 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             )}
 
-            {/* 3. Study Notes */}
+            {/* 3. Study Notes & NCERT 1-12 Question Bank */}
             <button
               onClick={() => onOpenStudyModal(currentUser ? currentUser.planId : 'plan-01')}
-              className="px-3 py-2 rounded-xl hover:bg-blue-50 text-slate-800 hover:text-[#1e3a8a] transition-colors flex items-center gap-1.5 font-bold"
+              className="px-3 py-2 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-950 transition-colors flex items-center gap-1.5 font-black border border-orange-200 shadow-2xs"
             >
-              <BookOpen className="w-3.5 h-3.5 text-blue-700" />
-              <span>NCERT नोट्स</span>
+              <BookOpen className="w-3.5 h-3.5 text-orange-600" />
+              <span>NCERT 1-12 प्रश्न बैंक</span>
+            </button>
+
+            {/* 3.1 B.Pharm 4th Semester Platform */}
+            <button
+              onClick={() => onOpenStudyModal('plan-01')}
+              className="px-2.5 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-950 transition-colors flex items-center gap-1.5 font-black border border-indigo-200"
+            >
+              <span className="text-xs">💊</span>
+              <span>फार्मेसी Sem-4</span>
             </button>
 
             {/* 4. Video Lessons */}
@@ -352,10 +361,17 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
             <button
               onClick={() => handleNavClick(() => onOpenStudyModal(currentUser ? currentUser.planId : 'plan-01'))}
-              className="p-2.5 rounded-xl bg-slate-50 text-slate-800 text-left border border-slate-200 flex items-center gap-2"
+              className="p-2.5 rounded-xl bg-orange-50 text-orange-950 text-left border border-orange-200 flex items-center gap-2 font-black"
             >
-              <BookOpen className="w-4 h-4 text-blue-700" />
-              <span>NCERT नोट्स</span>
+              <BookOpen className="w-4 h-4 text-orange-600" />
+              <span>NCERT 1-12 प्रश्न बैंक</span>
+            </button>
+            <button
+              onClick={() => handleNavClick(() => onOpenStudyModal('plan-01'))}
+              className="p-2.5 rounded-xl bg-indigo-50 text-indigo-950 text-left border border-indigo-200 flex items-center gap-2 font-black"
+            >
+              <span className="text-base">💊</span>
+              <span>फार्मेसी 4th Sem (PCI)</span>
             </button>
             <button
               onClick={() => handleNavClick(onOpenVideoModal)}

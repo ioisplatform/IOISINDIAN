@@ -235,10 +235,17 @@ export interface RegisterInput {
 export const registerStudentToDatabase = async (
   input: RegisterInput
 ): Promise<{ success: boolean; member?: MemberProfile; message: string }> => {
-  // Sync latest from Firestore first to prevent multi-device duplicates
-  let allMembers = await fetchAllMembersFromFirestore();
+  // Fast local check first (0ms), fall back to Firestore if local cache is empty
+  let allMembers = getStoredMembers();
   if (!allMembers.length) {
-    allMembers = getStoredMembers();
+    try {
+      allMembers = await Promise.race([
+        fetchAllMembersFromFirestore(),
+        new Promise<MemberProfile[]>((resolve) => setTimeout(() => resolve([]), 1200))
+      ]);
+    } catch {
+      allMembers = getStoredMembers();
+    }
   }
 
   // Validate Clean Phone (10 digits)
@@ -321,8 +328,10 @@ export const registerStudentToDatabase = async (
   const updatedList = [newStudent, ...allMembers];
   saveMembersLocally(updatedList);
 
-  // 2. Persist to Firestore Database in background
-  await syncUserToFirestore(newStudent);
+  // 2. Persist to Firestore Database in background without blocking UI
+  syncUserToFirestore(newStudent).catch(err => {
+    console.warn('Background Firestore sync queued:', err);
+  });
 
   return {
     success: true,
@@ -338,22 +347,40 @@ export const authenticateStudent = async (
   identifier: string,
   pass: string
 ): Promise<{ success: boolean; member?: MemberProfile; message: string; isPending?: boolean }> => {
-  // Sync latest from Firestore so multi-device approvals reflect immediately
-  let members = await fetchAllMembersFromFirestore();
-  if (!members.length) {
-    members = getStoredMembers();
-  }
-
   const cleanId = identifier.trim().toLowerCase();
   const cleanPhone = identifier.replace(/\D/g, '').slice(-10);
 
-  const matched = members.find(m => {
+  // 1. FAST LOCAL CHECK (0ms): Check local storage cache first
+  let members = getStoredMembers();
+  let matched = members.find(m => {
     const matchRoll = m.rollNumber && m.rollNumber.toLowerCase() === cleanId;
     const matchMemberId = m.memberId && m.memberId.toLowerCase() === cleanId;
     const matchPhone = cleanPhone.length === 10 && m.phone.replace(/\D/g, '').slice(-10) === cleanPhone;
     const matchEmail = m.email && m.email.toLowerCase() === cleanId;
     return matchRoll || matchMemberId || matchPhone || matchEmail;
   });
+
+  // 2. If not found in local cache, query Firestore with 1.2s timeout
+  if (!matched) {
+    try {
+      const freshMembers = await Promise.race([
+        fetchAllMembersFromFirestore(),
+        new Promise<MemberProfile[]>((resolve) => setTimeout(() => resolve([]), 1200))
+      ]);
+      if (freshMembers.length) {
+        members = freshMembers;
+        matched = members.find(m => {
+          const matchRoll = m.rollNumber && m.rollNumber.toLowerCase() === cleanId;
+          const matchMemberId = m.memberId && m.memberId.toLowerCase() === cleanId;
+          const matchPhone = cleanPhone.length === 10 && m.phone.replace(/\D/g, '').slice(-10) === cleanPhone;
+          const matchEmail = m.email && m.email.toLowerCase() === cleanId;
+          return matchRoll || matchMemberId || matchPhone || matchEmail;
+        });
+      }
+    } catch {
+      // Offline fallback
+    }
+  }
 
   if (!matched) {
     return {

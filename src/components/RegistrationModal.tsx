@@ -908,3 +908,5 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
     </div>
   );
 };
+
+export default RegistrationModal;

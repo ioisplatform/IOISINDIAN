@@ -799,3 +799,5 @@ export const UserDashboardModal: React.FC<UserDashboardModalProps> = ({
     </div>
   );
 };
+
+export default UserDashboardModal;

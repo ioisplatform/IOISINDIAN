@@ -33,6 +33,12 @@ import {
 } from 'lucide-react';
 import { BAL_VIKAS_PRINTABLE_PAGES, BalVikasPrintablePage } from './StudyResourceViewerModal';
 import { NurseryAlphabetWorkbook } from './NurseryAlphabetWorkbook';
+import { KidsDrawingCanvas } from './KidsDrawingCanvas';
+import { NeetJeeProbabilityZone } from './NeetJeeProbabilityZone';
+import { PharmacySem4Portal } from './PharmacySem4Portal';
+import { NCERT_QUESTIONS_DATA, NCERT_CLASSES_LIST, NCERTQuestionItem } from '../data/ncertLineByLineQuestionsData';
+import { soundEffects } from '../utils/soundEffects';
+import { Palette, Target, Flame, Heart, Sparkle } from 'lucide-react';
 
 interface NCERTFullStudySuiteProps {
   initialClass?: number;
@@ -290,11 +296,16 @@ export const NCERTFullStudySuite: React.FC<NCERTFullStudySuiteProps> = ({
   initialClass = 1,
   initialSubject = 'math'
 }) => {
-  const [activeTab, setActiveTab] = useState<'book' | 'hindi' | 'english' | 'math' | 'tables' | 'operations' | 'chapters' | 'download' | 'workbook'>('chapters');
+  const [activeTab, setActiveTab] = useState<'questions' | 'drawing' | 'neet_jee' | 'pharmacy_sem4' | 'book' | 'hindi' | 'english' | 'math' | 'tables' | 'operations' | 'chapters' | 'download' | 'workbook'>('questions');
   const [selectedClass, setSelectedClass] = useState<number>(initialClass);
   const [selectedTable, setSelectedTable] = useState<number>(2);
   const [enlargedPrintPage, setEnlargedPrintPage] = useState<BalVikasPrintablePage | null>(null);
   const [suiteToast, setSuiteToast] = useState<string | null>(null);
+  
+  // Interactive Question Bank State
+  const [userQuestionAnswers, setUserQuestionAnswers] = useState<Record<string, number>>({});
+  const [revealedSolutions, setRevealedSolutions] = useState<Record<string, boolean>>({});
+  const [activeFunnyCharacter, setActiveFunnyCharacter] = useState<string>('🐵 चिंटू बंदर');
 
   const handleDownloadPageFile = (page: BalVikasPrintablePage) => {
     const content = `========================================================================\n`
@@ -443,32 +454,96 @@ export const NCERTFullStudySuite: React.FC<NCERTFullStudySuiteProps> = ({
   return (
     <div className="space-y-5 text-slate-100">
       
-      {/* Top Main Navigation Bar for Class 1 to 5 */}
+      {/* Top Main Navigation Bar for Class 1 to 12 */}
       <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-3xl bg-slate-950 border border-slate-800 shadow-xl">
         
-        {/* Class Switcher */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-black text-amber-400 uppercase tracking-wider">NCERT कक्षा:</span>
+        {/* Class Switcher (Classes 1 to 12) */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
           <div className="flex items-center gap-1.5">
-            {[1, 2, 3, 4, 5].map((cls) => (
-              <button
-                key={cls}
-                onClick={() => setSelectedClass(cls)}
-                className={`w-8 h-8 rounded-xl font-black text-xs transition-all flex items-center justify-center ${
-                  selectedClass === cls
-                    ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg scale-110 ring-2 ring-orange-400/50'
-                    : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
-                }`}
-              >
-                {cls}
-              </button>
-            ))}
+            <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin" />
+            <span className="text-xs font-black text-amber-400 uppercase tracking-wider">NCERT कक्षा (1-12):</span>
+          </div>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((cls) => {
+              const isKids = cls <= 6;
+              const isSelected = selectedClass === cls;
+              return (
+                <button
+                  key={cls}
+                  onClick={() => {
+                    setSelectedClass(cls);
+                    soundEffects.playBoing();
+                  }}
+                  className={`w-8 h-8 rounded-xl font-black text-xs transition-all flex items-center justify-center ${
+                    isSelected
+                      ? isKids
+                        ? 'bg-gradient-to-r from-amber-400 via-rose-500 to-pink-500 text-white shadow-lg scale-110 ring-2 ring-rose-400'
+                        : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg scale-110 ring-2 ring-blue-400'
+                      : 'bg-slate-900 text-slate-300 hover:text-white border border-slate-800'
+                  }`}
+                  title={`कक्षा ${cls} ${isKids ? '(Primary / Middle • Fun & Drawing)' : '(Senior • NEET / JEE Mains)'}`}
+                >
+                  {cls}
+                </button>
+              );
+            })}
           </div>
         </div>
 
         {/* Feature Sections Buttons */}
         <div className="flex flex-wrap items-center gap-1.5 text-xs font-bold">
           
+          <button
+            onClick={() => {
+              setActiveTab('questions');
+              soundEffects.playBoing();
+            }}
+            className={`px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 ${
+              activeTab === 'questions' ? 'bg-gradient-to-r from-amber-500 via-rose-500 to-pink-500 text-white shadow-lg ring-2 ring-rose-400/50' : 'bg-slate-900 text-amber-300 hover:text-white border border-amber-500/40'
+            }`}
+          >
+            <Target className="w-3.5 h-3.5 text-amber-300" />
+            <span>🎯 1-12th अध्यायवार प्रश्न बैंक</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setActiveTab('drawing');
+              soundEffects.playCelebration();
+            }}
+            className={`px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 ${
+              activeTab === 'drawing' ? 'bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 text-white shadow-lg ring-2 ring-pink-400/50' : 'bg-slate-900 text-pink-400 hover:text-white border border-pink-500/40'
+            }`}
+          >
+            <Palette className="w-3.5 h-3.5 text-pink-400" />
+            <span>🎨 बच्चों का रंगीन ड्राइंग पैड</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setActiveTab('neet_jee');
+              soundEffects.playBoing();
+            }}
+            className={`px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 ${
+              activeTab === 'neet_jee' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg ring-2 ring-blue-400/50' : 'bg-slate-900 text-blue-400 hover:text-white border border-blue-500/40'
+            }`}
+          >
+            <Flame className="w-3.5 h-3.5 text-orange-400 fill-orange-400" />
+            <span>🔥 NEET & JEE Mains प्रश्न बैंक</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setActiveTab('pharmacy_sem4');
+              soundEffects.playBoing();
+            }}
+            className={`px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 ${
+              activeTab === 'pharmacy_sem4' ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg ring-2 ring-indigo-400/50' : 'bg-slate-900 text-cyan-400 hover:text-white border border-cyan-500/40'
+            }`}
+          >
+            <span>💊 फार्मेसी 4th Sem (PCI)</span>
+          </button>
+
           <button
             onClick={() => setActiveTab('chapters')}
             className={`px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 ${
@@ -538,7 +613,7 @@ export const NCERTFullStudySuite: React.FC<NCERTFullStudySuiteProps> = ({
               activeTab === 'workbook' ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg ring-2 ring-orange-400/40' : 'bg-slate-900 text-orange-400 hover:text-white border border-orange-500/40'
             }`}
           >
-            <span>🎨 A-Z नर्सरी वर्कबुक (26 Pages)</span>
+            <span>🎨 A-Z वर्कबुक</span>
           </button>
 
           <button
@@ -548,12 +623,261 @@ export const NCERTFullStudySuite: React.FC<NCERTFullStudySuiteProps> = ({
             }`}
           >
             <Download className="w-3.5 h-3.5 text-orange-400" />
-            <span>📥 प्रिंटेबल किट व पेज पिक्चर्स</span>
+            <span>📥 प्रिंटेबल किट</span>
           </button>
 
         </div>
 
       </div>
+
+      {/* =========================================================================
+          NEW SECTION A: 🎯 1-12th NCERT CHAPTER-BY-CHAPTER SHORT-FORM QUESTIONS
+          ========================================================================= */}
+      {activeTab === 'questions' && (
+        <div className="space-y-6 animate-in fade-in duration-200">
+          
+          {/* Header Banner: Tailored for Kids (1-6) or Seniors (7-12) */}
+          <div className={`p-6 sm:p-7 rounded-3xl border-2 shadow-xl ${
+            selectedClass <= 6
+              ? 'bg-gradient-to-r from-amber-400 via-rose-400 to-pink-500 border-amber-300 text-white'
+              : 'bg-gradient-to-r from-slate-950 via-blue-950 to-indigo-950 border-blue-500/40 text-white'
+          }`}>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="space-y-2 max-w-2xl">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-xs font-black uppercase tracking-wider">
+                  <span>{selectedClass <= 6 ? '🧒 छोटे बच्चों के लिए फनी कार्टून स्टाइल' : '🎯 माध्यमिक व उच्च माध्यमिक NCERT डिकोडर'}</span>
+                </div>
+                <h3 className="text-xl sm:text-2xl lg:text-3xl font-black">
+                  कक्षा {selectedClass} NCERT: अध्यायवार शॉर्ट-फॉर्म प्रश्न व सम्पूर्ण उत्तर
+                </h3>
+                <p className="text-xs sm:text-sm font-medium leading-relaxed opacity-95">
+                  {selectedClass <= 6
+                    ? 'बोरिंग ब्लैक एंड व्हाइट बंद! यहाँ हैं मजेदार कार्टून पहेलियां, चटकदार रंगीन कार्ड्स और उंगली से स्क्रीन पर चित्र बनाने का ड्राइंग पैड!'
+                    : 'Google हमेशा शॉर्टकट करता है, पर परीक्षा में NCERT की हर एक लाइन से सवाल आते हैं! यहाँ हर लाइन का सटीक व गहरा उत्तर उपलब्ध है।'}
+                </p>
+              </div>
+
+              {selectedClass <= 6 && (
+                <button
+                  onClick={() => {
+                    setActiveTab('drawing');
+                    soundEffects.playCelebration();
+                  }}
+                  className="px-5 py-3 rounded-2xl bg-white text-rose-600 hover:bg-yellow-100 font-black text-xs sm:text-sm shadow-xl flex items-center gap-2 active:scale-95 transition-all"
+                >
+                  <Palette className="w-5 h-5 text-rose-500" />
+                  <span>🎨 रंगीन ड्राइंग पैड खोलें (Draw Now)</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Questions Grid for Selected Class */}
+          <div className="space-y-5">
+            {(() => {
+              const classQuestions = NCERT_QUESTIONS_DATA.filter(q => q.classNumber === selectedClass);
+              const questionsToShow = classQuestions.length > 0 
+                ? classQuestions 
+                : NCERT_QUESTIONS_DATA.filter(q => selectedClass <= 6 ? q.classNumber <= 6 : q.classNumber >= 7);
+
+              return questionsToShow.map((item, idx) => {
+                const isAnswered = userQuestionAnswers[item.id] !== undefined;
+                const chosenOpt = userQuestionAnswers[item.id];
+                const isRight = chosenOpt === item.correctIndex;
+                const isRevealed = revealedSolutions[item.id];
+
+                return (
+                  <div
+                    key={item.id}
+                    className={`rounded-3xl p-6 sm:p-7 border-2 transition-all space-y-4 shadow-lg ${
+                      selectedClass <= 6
+                        ? 'bg-gradient-to-b from-white via-amber-50/30 to-rose-50/40 border-amber-300 hover:border-rose-400'
+                        : 'bg-white border-slate-200 hover:border-blue-400 text-slate-900'
+                    }`}
+                  >
+                    {/* Header: Class, Subject, Badge */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`px-3 py-1 rounded-full text-xs font-black ${
+                          selectedClass <= 6
+                            ? 'bg-rose-100 text-rose-700 border border-rose-200'
+                            : 'bg-blue-100 text-blue-800 border border-blue-200'
+                        }`}>
+                          कक्षा {item.classNumber} • {item.subject}
+                        </span>
+                        <span className="text-xs font-bold text-slate-600">
+                          पाठ {item.chapterNumber}: {item.chapterTitle}
+                        </span>
+                      </div>
+
+                      {item.funnyBadge && (
+                        <span className="px-3 py-1 rounded-full text-xs font-black bg-amber-400 text-slate-950 shadow-sm flex items-center gap-1">
+                          <span>{item.funnyBadge}</span>
+                        </span>
+                      )}
+                      {item.neetJeeProbability && (
+                        <span className="px-3 py-1 rounded-full text-xs font-black bg-red-100 text-red-700 border border-red-200 flex items-center gap-1">
+                          <Flame className="w-3.5 h-3.5 fill-red-600 text-red-600" />
+                          <span>{item.neetJeeProbability}</span>
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Funny Dialogue (For Kids) */}
+                    {item.funnyDialogue && (
+                      <div className="p-3.5 rounded-2xl bg-amber-100/70 border border-amber-200 flex items-start gap-3">
+                        <span className="text-2xl shrink-0">{item.funnyCharacter?.split(' ')[0] || '🐵'}</span>
+                        <div>
+                          <span className="text-[11px] font-black text-amber-900 block">{item.funnyCharacter} बोला:</span>
+                          <p className="text-xs font-bold text-slate-800 leading-relaxed italic">
+                            "{item.funnyDialogue}"
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Short Form Question */}
+                    <div className="flex items-start gap-2.5">
+                      <span className="w-7 h-7 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-black text-xs flex items-center justify-center shrink-0 mt-0.5 shadow">
+                        #{idx + 1}
+                      </span>
+                      <h4 className="text-base sm:text-lg font-black text-slate-900 leading-snug">
+                        {item.shortQuestion}
+                      </h4>
+                    </div>
+
+                    {/* 4 Interactive Multiple Choice Options */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                      {item.options.map((opt, optIdx) => {
+                        let optStyle = 'bg-white hover:bg-slate-50 text-slate-800 border-slate-200';
+                        let icon = <span className="w-6 h-6 rounded-lg bg-slate-100 text-slate-700 font-black text-xs flex items-center justify-center shrink-0">{String.fromCharCode(65 + optIdx)}</span>;
+
+                        if (isAnswered) {
+                          if (optIdx === item.correctIndex) {
+                            optStyle = 'bg-emerald-50 border-emerald-500 text-emerald-950 font-black ring-2 ring-emerald-300';
+                            icon = <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />;
+                          } else if (optIdx === chosenOpt) {
+                            optStyle = 'bg-rose-50 border-rose-500 text-rose-950 ring-2 ring-rose-300';
+                            icon = <XCircle className="w-6 h-6 text-rose-600 shrink-0" />;
+                          } else {
+                            optStyle = 'opacity-50 bg-slate-50 border-slate-200 text-slate-500';
+                          }
+                        }
+
+                        return (
+                          <button
+                            key={optIdx}
+                            disabled={isAnswered}
+                            onClick={() => {
+                              setUserQuestionAnswers(prev => ({ ...prev, [item.id]: optIdx }));
+                              setRevealedSolutions(prev => ({ ...prev, [item.id]: true }));
+                              if (optIdx === item.correctIndex) {
+                                soundEffects.playSuccess();
+                              } else {
+                                soundEffects.playTryAgain();
+                              }
+                            }}
+                            className={`p-3.5 rounded-2xl border-2 text-left text-xs sm:text-sm font-medium transition-all flex items-center gap-3 active:scale-98 ${optStyle}`}
+                          >
+                            {icon}
+                            <span className="flex-1 leading-relaxed">{opt}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Toggle Solution & NCERT Line Citation */}
+                    {isAnswered && (
+                      <div className="pt-2">
+                        <button
+                          onClick={() => setRevealedSolutions(prev => ({ ...prev, [item.id]: !prev[item.id] }))}
+                          className="text-xs font-black text-indigo-600 hover:text-indigo-800 flex items-center gap-1.5"
+                        >
+                          <BookOpen className="w-4 h-4" />
+                          <span>{isRevealed ? 'व्याख्या छिपाएं' : 'NCERT की किताब की पूरी लाइन और उत्तर देखें ▼'}</span>
+                        </button>
+                      </div>
+                    )}
+
+                    {/* DETAILED NCERT LINE DECODER */}
+                    {isRevealed && (
+                      <div className="p-4 rounded-2xl bg-slate-900 text-white space-y-3 text-xs animate-in fade-in">
+                        <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                          <span className="font-black text-amber-300">
+                            {item.ncertBookTitle}
+                          </span>
+                          <span className={isRight ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>
+                            {isRight ? '✓ बिल्कुल सही!' : `✗ सही उत्तर: विकल्प ${String.fromCharCode(65 + item.correctIndex)}`}
+                          </span>
+                        </div>
+
+                        <div className="p-3 rounded-xl bg-amber-500/10 border-l-4 border-amber-400">
+                          <span className="text-[10px] uppercase font-bold text-amber-400 block">NCERT की वास्तविक लाइन:</span>
+                          <p className="text-xs italic text-amber-100 mt-0.5 font-serif">
+                            {item.ncertExactLine}
+                          </p>
+                        </div>
+
+                        {item.googleShortcutTrap && (
+                          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30">
+                            <span className="text-[10px] uppercase font-bold text-rose-400 block">गूगल का शॉर्टकट बनाम पूरा सच:</span>
+                            <p className="text-xs text-rose-200 mt-0.5">
+                              {item.googleShortcutTrap}
+                            </p>
+                          </div>
+                        )}
+
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-slate-400 block">पूरी संकल्पनात्मक व्याख्या:</span>
+                          <p className="text-xs text-slate-200 mt-0.5 leading-relaxed font-medium">
+                            {item.lineExplanation}
+                          </p>
+                        </div>
+
+                        {item.superTrick && (
+                          <div className="p-2.5 rounded-xl bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 font-bold flex items-center gap-2">
+                            <Zap className="w-4 h-4 text-emerald-400 shrink-0" />
+                            <span>{item.superTrick}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                  </div>
+                );
+              });
+            })()}
+          </div>
+
+        </div>
+      )}
+
+      {/* =========================================================================
+          NEW SECTION B: 🎨 KIDS COLORFUL DRAWING & COLOR PAD
+          ========================================================================= */}
+      {activeTab === 'drawing' && (
+        <div className="animate-in fade-in duration-200">
+          <KidsDrawingCanvas />
+        </div>
+      )}
+
+      {/* =========================================================================
+          NEW SECTION C: 🔥 NEET & JEE MAINS PROBABILITY ZONE (CLASSES 7-12)
+          ========================================================================= */}
+      {activeTab === 'neet_jee' && (
+        <div className="animate-in fade-in duration-200">
+          <NeetJeeProbabilityZone />
+        </div>
+      )}
+
+      {/* =========================================================================
+          NEW SECTION D: 💊 B.PHARM 4TH SEMESTER PCI MASTER PLATFORM
+          ========================================================================= */}
+      {activeTab === 'pharmacy_sem4' && (
+        <div className="animate-in fade-in duration-200">
+          <PharmacySem4Portal />
+        </div>
+      )}
 
       {/* =========================================================================
           SECTION 1: 5-CHAPTER DETAILED CURRICULUM WITH DIRECT CHAPTER READING DIALOG

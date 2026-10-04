@@ -1,25 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Navbar } from './components/Navbar';
 import { HeroSection } from './components/HeroSection';
 import { ClassSelectionGrid } from './components/ClassSelectionGrid';
 import { KidsLearningCorner } from './components/KidsLearningCorner';
-import { KidsAiTeacherZone } from './components/KidsAiTeacherZone';
 import { MembershipPlansSection } from './components/MembershipPlansSection';
 import { StudentLeaderboardWidget } from './components/StudentLeaderboardWidget';
 import { StudentMainDashboardView } from './components/StudentMainDashboardView';
-import { PlansDialogModal } from './components/PlansDialogModal';
-import { VideoModalDialog } from './components/VideoModalDialog';
-import { TracingModalDialog } from './components/TracingModalDialog';
-import { HomeworkModalDialog } from './components/HomeworkModalDialog';
-import { StudyResourceViewerModal } from './components/StudyResourceViewerModal';
-import { AiAssistantModal } from './components/AiAssistantModal';
-import { RegistrationModal } from './components/RegistrationModal';
-import { LoginModal } from './components/LoginModal';
-import { UserDashboardModal } from './components/UserDashboardModal';
-import { IdCardModal } from './components/IdCardModal';
-import { AdminPanelModal } from './components/AdminPanelModal';
-import { StudentPlanHubPage } from './components/StudentPlanHubPage';
-import { NurseryAlphabetWorkbook } from './components/NurseryAlphabetWorkbook';
 import { Footer } from './components/Footer';
 import { ioisMasterPlans } from './data/ioisPlansData';
 import { PlanDetail, MemberProfile } from './types';
@@ -27,6 +13,32 @@ import {
   getCurrentSessionUser, 
   setCurrentSessionUser 
 } from './services/userService';
+
+// Lazy-loaded modal & heavy components for code splitting & lightweight initial bundle
+const LoginModal = lazy(() => import('./components/LoginModal'));
+const RegistrationModal = lazy(() => import('./components/RegistrationModal'));
+const UserDashboardModal = lazy(() => import('./components/UserDashboardModal'));
+const IdCardModal = lazy(() => import('./components/IdCardModal').then(m => ({ default: m.IdCardModal })));
+const AdminPanelModal = lazy(() => import('./components/AdminPanelModal').then(m => ({ default: m.AdminPanelModal })));
+const StudyResourceViewerModal = lazy(() => import('./components/StudyResourceViewerModal').then(m => ({ default: m.StudyResourceViewerModal })));
+const NurseryAlphabetWorkbook = lazy(() => import('./components/NurseryAlphabetWorkbook').then(m => ({ default: m.NurseryAlphabetWorkbook })));
+const PlansDialogModal = lazy(() => import('./components/PlansDialogModal').then(m => ({ default: m.PlansDialogModal })));
+const VideoModalDialog = lazy(() => import('./components/VideoModalDialog').then(m => ({ default: m.VideoModalDialog })));
+const TracingModalDialog = lazy(() => import('./components/TracingModalDialog').then(m => ({ default: m.TracingModalDialog })));
+const HomeworkModalDialog = lazy(() => import('./components/HomeworkModalDialog').then(m => ({ default: m.HomeworkModalDialog })));
+const KidsAiTeacherZone = lazy(() => import('./components/KidsAiTeacherZone').then(m => ({ default: m.KidsAiTeacherZone })));
+const AiAssistantModal = lazy(() => import('./components/AiAssistantModal').then(m => ({ default: m.AiAssistantModal })));
+const StudentPlanHubPage = lazy(() => import('./components/StudentPlanHubPage').then(m => ({ default: m.StudentPlanHubPage })));
+
+// Lightweight non-blocking loading spinner fallback for lazy components
+const ModalLoadingFallback = () => (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs animate-in fade-in">
+    <div className="bg-white rounded-2xl p-4 shadow-2xl flex items-center gap-3 border border-slate-200">
+      <div className="w-5 h-5 border-2 border-[#991b1b] border-t-transparent rounded-full animate-spin" />
+      <span className="text-xs font-bold text-slate-800">लोड हो रहा है...</span>
+    </div>
+  </div>
+);
 
 export default function App() {
   // User session state
@@ -173,17 +185,19 @@ export default function App() {
           3. Main Landing Homepage (Every button opens a Dialog Box)
       */}
       {activePlanObj ? (
-        <StudentPlanHubPage
-          plan={activePlanObj}
-          currentUser={currentUser}
-          onBack={() => setActiveStudyPlanId(null)}
-          onSwitchPlan={(newPlanId) => {
-            setActiveStudyPlanId(newPlanId);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
-          onOpenRegistration={(pId) => handleOpenRegistration(pId)}
-          onOpenLogin={() => setLoginModalOpen(true)}
-        />
+        <Suspense fallback={<ModalLoadingFallback />}>
+          <StudentPlanHubPage
+            plan={activePlanObj}
+            currentUser={currentUser}
+            onBack={() => setActiveStudyPlanId(null)}
+            onSwitchPlan={(newPlanId) => {
+              setActiveStudyPlanId(newPlanId);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            onOpenRegistration={(pId) => handleOpenRegistration(pId)}
+            onOpenLogin={() => setLoginModalOpen(true)}
+          />
+        </Suspense>
       ) : isDashboardView && currentUser ? (
         <StudentMainDashboardView
           currentUser={currentUser}
@@ -265,127 +279,148 @@ export default function App() {
       )}
 
       {/* ------------------------------------------------------------- */}
-      {/* 🚀 ALL BUTTONS OPEN INTERACTIVE DIALOG BOXES (MODALS SYSTEM) */}
+      {/* 🚀 CODE-SPLIT LAZY MODALS (Suspense & React.lazy for Fast Loading) */}
       {/* ------------------------------------------------------------- */}
+      <Suspense fallback={<ModalLoadingFallback />}>
+        {/* 1. Plans Dialog Box Modal */}
+        {plansModalOpen && (
+          <PlansDialogModal
+            isOpen={plansModalOpen}
+            onClose={() => setPlansModalOpen(false)}
+            onSelectPlanStudy={(pId) => handleOpenStudyModal(pId)}
+            onSelectPlanJoin={(pId) => handleOpenRegistration(pId)}
+          />
+        )}
 
-      {/* 1. Plans Dialog Box Modal */}
-      <PlansDialogModal
-        isOpen={plansModalOpen}
-        onClose={() => setPlansModalOpen(false)}
-        onSelectPlanStudy={(pId) => handleOpenStudyModal(pId)}
-        onSelectPlanJoin={(pId) => handleOpenRegistration(pId)}
-      />
+        {/* 2. Video Lessons Player Dialog Box Modal */}
+        {videoModalOpen && (
+          <VideoModalDialog
+            isOpen={videoModalOpen}
+            onClose={() => setVideoModalOpen(false)}
+            planId={selectedStudyPlanId}
+          />
+        )}
 
-      {/* 2. Video Lessons Player Dialog Box Modal */}
-      <VideoModalDialog
-        isOpen={videoModalOpen}
-        onClose={() => setVideoModalOpen(false)}
-        planId={selectedStudyPlanId}
-      />
+        {/* 3. Digital Tracing Pad Dialog Box Modal */}
+        {tracingModalOpen && (
+          <TracingModalDialog
+            isOpen={tracingModalOpen}
+            onClose={() => setTracingModalOpen(false)}
+            planId={selectedStudyPlanId}
+          />
+        )}
 
-      {/* 3. Digital Tracing Pad Dialog Box Modal */}
-      <TracingModalDialog
-        isOpen={tracingModalOpen}
-        onClose={() => setTracingModalOpen(false)}
-        planId={selectedStudyPlanId}
-      />
+        {/* 4. Daily Homework & Check Dialog Box Modal */}
+        {homeworkModalOpen && (
+          <HomeworkModalDialog
+            isOpen={homeworkModalOpen}
+            onClose={() => setHomeworkModalOpen(false)}
+            planId={selectedStudyPlanId}
+          />
+        )}
 
-      {/* 4. Daily Homework & Check Dialog Box Modal */}
-      <HomeworkModalDialog
-        isOpen={homeworkModalOpen}
-        onClose={() => setHomeworkModalOpen(false)}
-        planId={selectedStudyPlanId}
-      />
+        {/* 5. Complete Study Resource & NCERT Notes Viewer Dialog Box Modal */}
+        {studyModalOpen && (
+          <StudyResourceViewerModal
+            isOpen={studyModalOpen}
+            onClose={() => setStudyModalOpen(false)}
+            resource={null}
+            plan={currentStudyPlanObj}
+            currentUser={currentUser}
+            onOpenLogin={() => setLoginModalOpen(true)}
+            onOpenRegistration={(pId) => handleOpenRegistration(pId)}
+          />
+        )}
 
-      {/* 5. Complete Study Resource & NCERT Notes Viewer Dialog Box Modal */}
-      <StudyResourceViewerModal
-        isOpen={studyModalOpen}
-        onClose={() => setStudyModalOpen(false)}
-        resource={null}
-        plan={currentStudyPlanObj}
-        currentUser={currentUser}
-        onOpenLogin={() => setLoginModalOpen(true)}
-        onOpenRegistration={(pId) => handleOpenRegistration(pId)}
-      />
+        {/* 6. Dedicated Kids AI Teacher Zone Dialog Box Modal */}
+        {kidsAiZoneOpen && (
+          <KidsAiTeacherZone
+            isOpen={kidsAiZoneOpen}
+            onClose={() => setKidsAiZoneOpen(false)}
+            onOpenStudyPage={(pId) => handleOpenStudyModal(pId)}
+          />
+        )}
 
-      {/* 6. Dedicated Kids AI Teacher Zone Dialog Box Modal */}
-      <KidsAiTeacherZone
-        isOpen={kidsAiZoneOpen}
-        onClose={() => setKidsAiZoneOpen(false)}
-        onOpenStudyPage={(pId) => handleOpenStudyModal(pId)}
-      />
+        {/* 8. 24x7 AI Assistant Tutor Dialog Box Modal */}
+        {aiModalOpen && (
+          <AiAssistantModal
+            isOpen={aiModalOpen}
+            onClose={() => setAiModalOpen(false)}
+            initialPrompt={aiInitialPrompt}
+            onSelectPlanToJoin={(plan) => {
+              setAiModalOpen(false);
+              handleOpenRegistration(plan.id);
+            }}
+          />
+        )}
 
-      {/* 8. 24x7 AI Assistant Tutor Dialog Box Modal */}
-      <AiAssistantModal
-        isOpen={aiModalOpen}
-        onClose={() => setAiModalOpen(false)}
-        initialPrompt={aiInitialPrompt}
-        onSelectPlanToJoin={(plan) => {
-          setAiModalOpen(false);
-          handleOpenRegistration(plan.id);
-        }}
-      />
+        {/* 9. Registration & Account Verification Pass Dialog Box Modal */}
+        {registrationModalOpen && (
+          <RegistrationModal
+            isOpen={registrationModalOpen}
+            onClose={() => setRegistrationModalOpen(false)}
+            initialPlanId={selectedPlanForReg}
+            onSuccess={handleSuccessRegistration}
+            onOpenLogin={() => {
+              setRegistrationModalOpen(false);
+              setLoginModalOpen(true);
+            }}
+          />
+        )}
 
-      {/* 9. Registration & Account Verification Pass Dialog Box Modal */}
-      <RegistrationModal
-        isOpen={registrationModalOpen}
-        onClose={() => setRegistrationModalOpen(false)}
-        initialPlanId={selectedPlanForReg}
-        onSuccess={handleSuccessRegistration}
-        onOpenLogin={() => {
-          setRegistrationModalOpen(false);
-          setLoginModalOpen(true);
-        }}
-      />
+        {/* 10. Student Login Dialog Box Modal */}
+        {loginModalOpen && (
+          <LoginModal
+            isOpen={loginModalOpen}
+            onClose={() => setLoginModalOpen(false)}
+            onSuccess={handleSuccessLogin}
+            onOpenRegister={() => {
+              setLoginModalOpen(false);
+              setRegistrationModalOpen(true);
+            }}
+          />
+        )}
 
-      {/* 10. Student Login Dialog Box Modal */}
-      <LoginModal
-        isOpen={loginModalOpen}
-        onClose={() => setLoginModalOpen(false)}
-        onSuccess={handleSuccessLogin}
-        onOpenRegister={() => {
-          setLoginModalOpen(false);
-          setRegistrationModalOpen(true);
-        }}
-      />
+        {/* 11. Student Academic Dashboard Dialog Box Modal */}
+        {dashboardModalOpen && currentUser && (
+          <UserDashboardModal
+            isOpen={dashboardModalOpen}
+            onClose={() => setDashboardModalOpen(false)}
+            currentUser={currentUser}
+            onOpenStudyPage={(pId) => handleOpenStudyModal(pId)}
+            onOpenIdCardModal={handleOpenIdCardModal}
+            onLogout={handleLogout}
+          />
+        )}
 
-      {/* 11. Student Academic Dashboard Dialog Box Modal */}
-      {currentUser && (
-        <UserDashboardModal
-          isOpen={dashboardModalOpen}
-          onClose={() => setDashboardModalOpen(false)}
-          currentUser={currentUser}
-          onOpenStudyPage={(pId) => handleOpenStudyModal(pId)}
-          onOpenIdCardModal={handleOpenIdCardModal}
-          onLogout={handleLogout}
-        />
-      )}
+        {/* 12. Smart Student ID Card Dialog Box Modal */}
+        {idCardModalOpen && currentUser && (
+          <IdCardModal
+            isOpen={idCardModalOpen}
+            onClose={() => setIdCardModalOpen(false)}
+            currentUser={currentUser}
+          />
+        )}
 
-      {/* 12. Smart Student ID Card Dialog Box Modal */}
-      {currentUser && (
-        <IdCardModal
-          isOpen={idCardModalOpen}
-          onClose={() => setIdCardModalOpen(false)}
-          currentUser={currentUser}
-        />
-      )}
+        {/* 13. Secure Admin Panel Dialog Box Modal (Firebase Live DB & Kit Setup) */}
+        {adminModalOpen && (
+          <AdminPanelModal
+            isOpen={adminModalOpen}
+            onClose={() => setAdminModalOpen(false)}
+            onUsersUpdated={() => {
+              const u = getCurrentSessionUser();
+              if (u) setCurrentUser(u);
+            }}
+          />
+        )}
 
-      {/* 13. Secure Admin Panel Dialog Box Modal (Firebase Live DB & Kit Setup) */}
-      <AdminPanelModal
-        isOpen={adminModalOpen}
-        onClose={() => setAdminModalOpen(false)}
-        onUsersUpdated={() => {
-          const u = getCurrentSessionUser();
-          if (u) setCurrentUser(u);
-        }}
-      />
-
-      {/* 14. IOIS Nursery Alphabet Series (A to Z) Educational Workbook Modal */}
-      {nurseryWorkbookOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/85 backdrop-blur-sm animate-in fade-in">
-          <NurseryAlphabetWorkbook onClose={() => setNurseryWorkbookOpen(false)} />
-        </div>
-      )}
+        {/* 14. IOIS Nursery Alphabet Series (A to Z) Educational Workbook Modal */}
+        {nurseryWorkbookOpen && (
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/85 backdrop-blur-sm animate-in fade-in">
+            <NurseryAlphabetWorkbook onClose={() => setNurseryWorkbookOpen(false)} />
+          </div>
+        )}
+      </Suspense>
 
     </div>
   );
